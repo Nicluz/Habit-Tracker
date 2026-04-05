@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-bg-page:    #09090f;
+  --color-bg-card:    #111120;
+  --color-bg-input:   #191928;
+  --color-bg-hover:   #21213a;
+  --color-bg-active:  #2a2a45;
+  --color-accent:     #7c3aed;
+  --color-accent-lt:  #9d5ff5;
+  --color-accent-gl:  rgba(124,58,237,0.22);
+  --color-emerald:    #10b981;
+  --color-fire:       #ef4444;
+  --color-amber:      #f59e0b;
+  --color-sky:        #3b82f6;
+  --color-border:     rgba(255,255,255,0.07);
+  --color-border-lt:  rgba(255,255,255,0.04);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-tap-highlight-color: transparent; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-bg-page);
+  color: #f1f5f9;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type=number] { -moz-appearance: textfield; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a45; border-radius: 4px; }
+
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Transition defaults */
+.transition-fast { transition: all 0.15s ease; }
+
+/* Toast animation */
+@keyframes toast-in  { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes toast-out { from { opacity:1; } to { opacity:0; transform:translateY(-6px); } }
+.toast-enter { animation: toast-in  0.22s ease forwards; }
+.toast-leave { animation: toast-out 0.28s ease 2.4s forwards; }
+
+/* Spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.75s linear infinite; }
+
+/* Slide-up modal */
+@keyframes slide-up { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.slide-up { animation: slide-up 0.22s ease forwards; }
+
+/* Fade in */
+@keyframes fade-in { from { opacity:0; } to { opacity:1; } }
+.fade-in { animation: fade-in 0.2s ease forwards; }
