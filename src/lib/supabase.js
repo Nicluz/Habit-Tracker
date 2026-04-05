@@ -1,17 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    '[Habit Tracker] Supabase env vars missing. ' +
-    'Create a .env file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. ' +
-    'See SETUP.md for instructions.'
-  )
-}
-
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder'
+  'https://vjimgvsueahdtjtgiiqd.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqaW1ndnN1ZWFoZHRqdGdpaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4MDg5NDgsImV4cCI6MjA1OTM4NDk0OH0.KQ-0H3Wr3onXHsDLhbZIuv_98JgAavdy0XuNi507Q64'
 )
