@@ -2,21 +2,22 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useApp, toast } from '../App'
 import { getDayKey, WEEKLY_PLAN } from '../data/trainingPlan'
-import TimeInput    from '../components/input/TimeInput'
-import Toggle       from '../components/input/Toggle'
-import RatingGrid   from '../components/input/RatingGrid'
-import QualityPicker from '../components/input/QualityPicker'
-import Counter      from '../components/input/Counter'
+import TimePicker       from '../components/input/TimePicker'
+import Toggle           from '../components/input/Toggle'
+import RatingGrid       from '../components/input/RatingGrid'
+import QualityPicker    from '../components/input/QualityPicker'
+import Counter          from '../components/input/Counter'
+import CalendarOverview from '../components/CalendarOverview'
 
-const BUILT_IN_ACTIVITIES = ['Running','Cycling','Gym','Padel','Home Gym','Tennis','Rest Day']
+const BUILT_IN_ACTIVITIES = ['Running', 'Cycling', 'Gym', 'Padel', 'Home Gym', 'Tennis', 'Rest Day']
 
 const FEELINGS = [
-  { key: 'feel_physical', label: 'Physical'  },
-  { key: 'feel_social',   label: 'Social'    },
-  { key: 'feel_work',     label: 'Work'      },
-  { key: 'feel_leisure',  label: 'Leisure'   },
-  { key: 'feel_inner',    label: 'Inner'     },
-  { key: 'feel_overall',  label: 'Overall'   },
+  { key: 'feel_physical', label: 'Physical' },
+  { key: 'feel_social',   label: 'Social'   },
+  { key: 'feel_work',     label: 'Work'     },
+  { key: 'feel_leisure',  label: 'Leisure'  },
+  { key: 'feel_inner',    label: 'Inner'    },
+  { key: 'feel_overall',  label: 'Overall'  },
 ]
 
 function todayStr() { return new Date().toISOString().split('T')[0] }
@@ -29,14 +30,16 @@ function fmtDate(str) {
 }
 
 const EMPTY = {
-  sleep_h: '', sleep_m: '', wake_h: '', wake_m: '',
+  sleep_h: 22, sleep_m: 0,
+  wake_h: 7,   wake_m: 0,
   sleep_quality: null, morning_routine: false,
   activity: '', pushups: 0, stretching: false,
   day_rating: null,
-  screen_h: '', screen_m: '', social_h: '', social_m: '',
+  screen_h: 0, screen_m: 0,
+  social_h: 0, social_m: 0,
   reading: false, alcohol: false,
   feel_physical: null, feel_social: null, feel_work: null,
-  feel_leisure: null, feel_inner: null, feel_overall: null,
+  feel_leisure: null,  feel_inner: null,  feel_overall: null,
 }
 
 const card = { background:'#111120', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:20, marginBottom:12 }
@@ -47,11 +50,11 @@ const dot = { width:6, height:6, borderRadius:'50%', background:'#7c3aed', flexS
 
 export default function InputView() {
   const { session, customActivities, addCustomActivity } = useApp()
-  const [date,   setDate]   = useState(todayStr())
-  const [form,   setForm]   = useState(EMPTY)
-  const [saving, setSaving] = useState(false)
-  const [saved,  setSaved]  = useState(false)
-  const [newAct, setNewAct] = useState('')
+  const [date,    setDate]    = useState(todayStr())
+  const [form,    setForm]    = useState(EMPTY)
+  const [saving,  setSaving]  = useState(false)
+  const [saved,   setSaved]   = useState(false)
+  const [newAct,  setNewAct]  = useState('')
   const [entryId, setEntryId] = useState(null)
 
   const daySession = WEEKLY_PLAN[getDayKey(date)]
@@ -67,10 +70,11 @@ export default function InputView() {
     if (data) {
       setEntryId(data.id)
       const { id, user_id, created_at, updated_at, date: _d, ...rest } = data
-      // Merge nulls → empty strings for time fields
       setForm({
         ...EMPTY,
-        ...Object.fromEntries(Object.entries(rest).map(([k,v]) => [k, v ?? EMPTY[k]])),
+        ...Object.fromEntries(
+          Object.entries(rest).map(([k, v]) => [k, v ?? EMPTY[k]])
+        ),
       })
     } else {
       setEntryId(null)
@@ -90,17 +94,8 @@ export default function InputView() {
       user_id: session.user.id,
       date,
       ...form,
-      sleep_h:  form.sleep_h  === '' ? null : Number(form.sleep_h),
-      sleep_m:  form.sleep_m  === '' ? null : Number(form.sleep_m),
-      wake_h:   form.wake_h   === '' ? null : Number(form.wake_h),
-      wake_m:   form.wake_m   === '' ? null : Number(form.wake_m),
-      screen_h: form.screen_h === '' ? null : Number(form.screen_h),
-      screen_m: form.screen_m === '' ? null : Number(form.screen_m),
-      social_h: form.social_h === '' ? null : Number(form.social_h),
-      social_m: form.social_m === '' ? null : Number(form.social_m),
       updated_at: new Date().toISOString(),
     }
-
     const { error } = entryId
       ? await supabase.from('daily_entries').update(payload).eq('id', entryId)
       : await supabase.from('daily_entries').insert(payload)
@@ -123,45 +118,38 @@ export default function InputView() {
     set('activity', t)
   }
 
-  const allActivities = [...BUILT_IN_ACTIVITIES, ...customActivities.map(a => a.name)]
-
-  /* ── Derived: sleep duration ── */
+  /* Sleep duration display */
   const sleepDuration = (() => {
-    if (form.sleep_h === '' || form.wake_h === '') return null
-    const s = (Number(form.sleep_h) || 0) * 60 + (Number(form.sleep_m) || 0)
-    let w = (Number(form.wake_h) || 0) * 60 + (Number(form.wake_m) || 0)
-    if (w <= s) w += 24 * 60
-    const diff = w - s
+    let diff = (form.wake_h * 60 + form.wake_m) - (form.sleep_h * 60 + form.sleep_m)
+    if (diff <= 0) diff += 24 * 60
     return `${Math.floor(diff / 60)}h ${diff % 60}m`
   })()
 
+  const allActivities = [...BUILT_IN_ACTIVITIES, ...customActivities.map(a => a.name)]
+
   return (
     <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 16px' }}>
+
       {/* Header */}
       <div className="flex items-center justify-between py-5">
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.03em' }}>Daily Log</h1>
-          <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 2 }}>{fmtDate(date)}</p>
+          <h1 style={{ fontSize:'1.5rem', fontWeight:800, letterSpacing:'-0.03em' }}>Daily Log</h1>
+          <p style={{ fontSize:'0.8rem', color:'#94a3b8', marginTop:2 }}>{fmtDate(date)}</p>
         </div>
-        {saved && <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 600 }}>✓ Saved</span>}
+        {saved && <span style={{ fontSize:'0.78rem', color:'#10b981', fontWeight:600 }}>✓ Saved</span>}
       </div>
 
-      {/* Date navigator */}
-      <div className="flex items-center justify-between rounded-xl px-4 py-2.5 mb-4" style={{ background: '#111120', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <button onClick={() => setDate(d => { const n = new Date(d + 'T12:00:00'); n.setDate(n.getDate()-1); return n.toISOString().split('T')[0] })}
-          style={{ ...navBtnStyle }}>‹</button>
-        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#cbd5e1' }}>{fmtDate(date).split(' · ').pop()}</span>
-        <button onClick={() => setDate(d => { const n = new Date(d + 'T12:00:00'); if (d === todayStr()) return d; n.setDate(n.getDate()+1); return n.toISOString().split('T')[0] })}
-          style={{ ...navBtnStyle, opacity: date === todayStr() ? 0.3 : 1 }}>›</button>
-      </div>
+      {/* Calendar overview */}
+      <CalendarOverview selectedDate={date} onSelectDate={(d) => setDate(d)} />
 
       {/* Today's training hint */}
       {daySession && daySession.type === 'gym' && (
-        <div className="rounded-xl px-4 py-3 mb-3 flex items-center gap-3" style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.25)' }}>
-          <span style={{ fontSize: '1.25rem' }}>{daySession.emoji}</span>
+        <div className="rounded-xl px-4 py-3 mb-3 flex items-center gap-3"
+          style={{ background:'rgba(124,58,237,0.1)', border:'1px solid rgba(124,58,237,0.25)' }}>
+          <span style={{ fontSize:'1.25rem' }}>{daySession.emoji}</span>
           <div>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#9d5ff5' }}>Today's session</div>
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{daySession.name} — {daySession.subtitle}</div>
+            <div style={{ fontSize:'0.8rem', fontWeight:700, color:'#9d5ff5' }}>Today's session</div>
+            <div style={{ fontSize:'0.78rem', color:'#94a3b8' }}>{daySession.name} — {daySession.subtitle}</div>
           </div>
         </div>
       )}
@@ -175,23 +163,31 @@ export default function InputView() {
             Sleep
           </div>
 
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom:20 }}>
             <div style={fieldLabel}><span style={dot}/>Sleep Time</div>
-            <TimeInput hVal={form.sleep_h} mVal={form.sleep_m} onHChange={v=>set('sleep_h',v)} onMChange={v=>set('sleep_m',v)} placeholder={['22','30']}/>
+            <TimePicker
+              hVal={form.sleep_h} mVal={form.sleep_m}
+              onHChange={v => set('sleep_h', v)} onMChange={v => set('sleep_m', v)}
+            />
           </div>
 
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom:20 }}>
             <div style={fieldLabel}><span style={dot}/>Wake Up Time</div>
-            <TimeInput hVal={form.wake_h} mVal={form.wake_m} onHChange={v=>set('wake_h',v)} onMChange={v=>set('wake_m',v)} placeholder={['07','00']}/>
-            {sleepDuration && <p style={{ fontSize:'0.78rem', color:'#94a3b8', marginTop:6 }}>Sleep duration: <strong style={{color:'#f1f5f9'}}>{sleepDuration}</strong></p>}
+            <TimePicker
+              hVal={form.wake_h} mVal={form.wake_m}
+              onHChange={v => set('wake_h', v)} onMChange={v => set('wake_m', v)}
+            />
+            <p style={{ fontSize:'0.78rem', color:'#94a3b8', marginTop:8 }}>
+              Sleep duration: <strong style={{ color:'#f1f5f9' }}>{sleepDuration}</strong>
+            </p>
           </div>
 
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom:18 }}>
             <div style={fieldLabel}><span style={dot}/>Sleep Quality</div>
-            <QualityPicker value={form.sleep_quality} onChange={v=>set('sleep_quality',v)}/>
+            <QualityPicker value={form.sleep_quality} onChange={v => set('sleep_quality', v)} />
           </div>
 
-          <Toggle label="Morning routine completed" checked={form.morning_routine} onChange={v=>set('morning_routine',v)}/>
+          <Toggle label="Morning routine completed" checked={form.morning_routine} onChange={v => set('morning_routine', v)} />
         </div>
 
         {/* ── TRAINING ── */}
@@ -201,7 +197,7 @@ export default function InputView() {
             Training
           </div>
 
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom:18 }}>
             <div style={fieldLabel}><span style={dot}/>Activity</div>
             <select
               value={form.activity}
@@ -232,12 +228,12 @@ export default function InputView() {
             </div>
           </div>
 
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom:18 }}>
             <div style={fieldLabel}><span style={dot}/>Push-up Count</div>
-            <Counter value={form.pushups} onChange={v=>set('pushups',v)}/>
+            <Counter value={form.pushups} onChange={v => set('pushups', v)} />
           </div>
 
-          <Toggle label="Stretching done" checked={form.stretching} onChange={v=>set('stretching',v)}/>
+          <Toggle label="Stretching done" checked={form.stretching} onChange={v => set('stretching', v)} />
         </div>
 
         {/* ── GENERAL ── */}
@@ -247,24 +243,30 @@ export default function InputView() {
             General
           </div>
 
-          <div style={{ marginBottom: 18 }}>
-            <RatingGrid label="Day Rating" value={form.day_rating} onChange={v=>set('day_rating',v)}/>
+          <div style={{ marginBottom:18 }}>
+            <RatingGrid label="Day Rating" value={form.day_rating} onChange={v => set('day_rating', v)} />
           </div>
 
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom:18 }}>
             <div style={fieldLabel}><span style={dot}/>Overall Screen Time</div>
-            <TimeInput hVal={form.screen_h} mVal={form.screen_m} onHChange={v=>set('screen_h',v)} onMChange={v=>set('screen_m',v)} placeholder={['04','30']}/>
+            <TimePicker
+              hVal={form.screen_h} mVal={form.screen_m}
+              onHChange={v => set('screen_h', v)} onMChange={v => set('screen_m', v)}
+            />
           </div>
 
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom:18 }}>
             <div style={fieldLabel}><span style={dot}/>Social Media Time</div>
-            <TimeInput hVal={form.social_h} mVal={form.social_m} onHChange={v=>set('social_h',v)} onMChange={v=>set('social_m',v)} placeholder={['01','00']}/>
+            <TimePicker
+              hVal={form.social_h} mVal={form.social_m}
+              onHChange={v => set('social_h', v)} onMChange={v => set('social_m', v)}
+            />
           </div>
 
-          <div style={{ marginBottom: 14 }}>
-            <Toggle label="Reading" checked={form.reading} onChange={v=>set('reading',v)}/>
+          <div style={{ marginBottom:14 }}>
+            <Toggle label="Reading" checked={form.reading} onChange={v => set('reading', v)} />
           </div>
-          <Toggle label="Alcohol" checked={form.alcohol} onChange={v=>set('alcohol',v)}/>
+          <Toggle label="Alcohol" checked={form.alcohol} onChange={v => set('alcohol', v)} />
         </div>
 
         {/* ── FEELINGS ── */}
@@ -276,24 +278,23 @@ export default function InputView() {
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
             {FEELINGS.map(f => (
               <div key={f.key}>
-                <RatingGrid label={f.label} value={form[f.key]} onChange={v=>set(f.key,v)}/>
+                <RatingGrid label={f.label} value={form[f.key]} onChange={v => set(f.key, v)} />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Save */}
+        {/* Save button */}
         <button
           type="submit"
           disabled={saving}
           style={{
             width:'100%', padding:'14px', borderRadius:12, border:'none',
-            background: saving ? '#2a1a5e' : 'linear-gradient(135deg, #7c3aed 0%, #9d5ff5 100%)',
+            background: saving ? '#2a1a5e' : 'linear-gradient(135deg,#7c3aed 0%,#9d5ff5 100%)',
             color:'#fff', fontFamily:'inherit', fontSize:'0.9375rem', fontWeight:700,
             cursor: saving ? 'not-allowed' : 'pointer',
             boxShadow:'0 4px 16px rgba(124,58,237,0.3)',
-            marginBottom: 8, opacity: saving ? 0.7 : 1,
-            transition:'all 0.15s',
+            marginBottom:8, opacity: saving ? 0.7 : 1, transition:'all 0.15s',
           }}
         >
           {saving ? 'Saving…' : entryId ? 'Update Entry' : 'Save Entry'}
@@ -305,12 +306,4 @@ export default function InputView() {
       </form>
     </div>
   )
-}
-
-const navBtnStyle = {
-  width: 30, height: 30,
-  background: '#191928', border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: 8, color: '#94a3b8', fontSize: '1.1rem',
-  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontFamily: 'inherit',
 }
