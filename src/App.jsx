@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react'
 import { supabase } from './lib/supabase'
+import { loadSettings, saveSettings } from './lib/settings'
 import LoginView    from './views/LoginView'
 import InputView    from './views/InputView'
 import StatsView    from './views/StatsView'
@@ -23,6 +24,15 @@ export default function App() {
   const [activeView,       setActiveView]        = useState('input')
   const [toasts,           setToasts]            = useState([])
   const [customActivities, setCustomActivities]  = useState([])
+  const [settings,         setSettings]          = useState(loadSettings)
+
+  function updateSettings(patch) {
+    setSettings(prev => {
+      const next = { ...prev, ...patch }
+      saveSettings(next)
+      return next
+    })
+  }
 
   /* ── Auth init ── */
   useEffect(() => {
@@ -93,7 +103,7 @@ export default function App() {
   const View = views[activeView] || InputView
 
   return (
-    <AppCtx.Provider value={{ session, customActivities, addCustomActivity, deleteCustomActivity, setActiveView }}>
+    <AppCtx.Provider value={{ session, customActivities, addCustomActivity, deleteCustomActivity, setActiveView, settings, updateSettings }}>
       <div style={{ background: '#09090f', minHeight: '100vh', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
         <View />
         <BottomNav active={activeView} onChange={setActiveView} />

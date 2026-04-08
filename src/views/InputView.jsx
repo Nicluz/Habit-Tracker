@@ -84,7 +84,7 @@ function OverallBar({ value }) {
 }
 
 export default function InputView() {
-  const { session, customActivities, addCustomActivity } = useApp()
+  const { session, customActivities, addCustomActivity, settings } = useApp()
   const [date,    setDate]    = useState(todayStr())
   const [form,    setForm]    = useState(EMPTY)
   const [saving,  setSaving]  = useState(false)
@@ -166,6 +166,15 @@ export default function InputView() {
     setNewAct('')
     set('activity', t)
   }
+
+  /* ── Over-limit helpers ── */
+  const screenMins = form.screen_h * 60 + form.screen_m
+  const limitScreenMins = settings.screen_limit_h * 60 + settings.screen_limit_m
+  const screenOver = limitScreenMins > 0 && screenMins > limitScreenMins
+
+  const socialMins = form.social_h * 60 + form.social_m
+  const limitSocialMins = settings.social_limit_h * 60 + settings.social_limit_m
+  const socialOver = limitSocialMins > 0 && socialMins > limitSocialMins
 
   /* ── Sorted activity list ── */
   const customNames = customActivities.map(a => a.name)
@@ -268,10 +277,30 @@ export default function InputView() {
 
           <div style={{ marginBottom:16 }}>
             <div style={fLabel}><span style={dot}/>Push-up Count</div>
-            <Counter value={form.pushups} onChange={v => set('pushups', v)} step={10} max={500} />
+            <Counter value={form.pushups} onChange={v => set('pushups', v)} step={settings.pushup_step} max={settings.pushup_max} />
+            {settings.pushup_goal > 0 && (
+              <div style={{ marginTop:10 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.72rem', color:'#64748b', marginBottom:5 }}>
+                  <span>Daily goal</span>
+                  <span style={{ color: form.pushups >= settings.pushup_goal ? '#10b981' : '#64748b', fontWeight:600 }}>
+                    {form.pushups} / {settings.pushup_goal}
+                    {form.pushups >= settings.pushup_goal && ' ✓'}
+                  </span>
+                </div>
+                <div style={{ height:4, borderRadius:2, background:'rgba(255,255,255,0.06)' }}>
+                  <div style={{
+                    width:`${Math.min(100, (form.pushups / settings.pushup_goal) * 100)}%`,
+                    height:'100%', borderRadius:2, transition:'width 0.3s ease',
+                    background: form.pushups >= settings.pushup_goal ? '#10b981' : '#7c3aed',
+                  }}/>
+                </div>
+              </div>
+            )}
           </div>
 
-          <Toggle label="Stretching done" checked={form.stretching} onChange={v => set('stretching', v)} />
+          {settings.show_stretching && (
+            <Toggle label="Stretching done" checked={form.stretching} onChange={v => set('stretching', v)} />
+          )}
         </div>
 
         {/* ══ GENERAL ══ */}
@@ -285,28 +314,39 @@ export default function InputView() {
           {/* Screen time + Social media — stack on mobile, side-by-side on sm+ */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ marginBottom:16 }}>
             <div>
-              <div style={fLabel}><span style={dot}/>Screen Time</div>
+              <div style={{ ...fLabel, color: screenOver ? '#f97316' : undefined }}>
+                <span style={{ ...dot, background: screenOver ? '#f97316' : '#7c3aed' }}/>
+                Screen Time {screenOver && '· over limit'}
+              </div>
               <TimePicker fullWidth hVal={form.screen_h} mVal={form.screen_m}
                 onHChange={v => set('screen_h', v)} onMChange={v => set('screen_m', v)} />
             </div>
             <div>
-              <div style={fLabel}><span style={dot}/>Social Media</div>
+              <div style={{ ...fLabel, color: socialOver ? '#ef4444' : undefined }}>
+                <span style={{ ...dot, background: socialOver ? '#ef4444' : '#7c3aed' }}/>
+                Social Media {socialOver && '· over limit'}
+              </div>
               <TimePicker fullWidth hVal={form.social_h} mVal={form.social_m}
                 onHChange={v => set('social_h', v)} onMChange={v => set('social_m', v)} />
             </div>
           </div>
 
-          <div style={{ marginBottom:14 }}>
-            <Toggle label="Reading" checked={form.reading} onChange={v => set('reading', v)} />
-          </div>
-
-          <Toggle label="Alcohol" checked={form.alcohol} onChange={v => set('alcohol', v)} />
-
-          {form.alcohol && (
-            <div style={{ marginTop:14 }}>
-              <div style={fLabel}><span style={dot}/>Number of Drinks</div>
-              <Counter value={form.num_drinks} onChange={v => set('num_drinks', v)} step={1} max={20} />
+          {settings.show_reading && (
+            <div style={{ marginBottom:14 }}>
+              <Toggle label="Reading" checked={form.reading} onChange={v => set('reading', v)} />
             </div>
+          )}
+
+          {settings.show_alcohol && (
+            <>
+              <Toggle label="Alcohol" checked={form.alcohol} onChange={v => set('alcohol', v)} />
+              {form.alcohol && (
+                <div style={{ marginTop:14 }}>
+                  <div style={fLabel}><span style={dot}/>Number of Drinks</div>
+                  <Counter value={form.num_drinks} onChange={v => set('num_drinks', v)} step={1} max={20} />
+                </div>
+              )}
+            </>
           )}
         </div>
 
