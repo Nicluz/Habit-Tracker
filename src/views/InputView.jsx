@@ -243,13 +243,6 @@ export default function InputView() {
               <option value="">— Select activity —</option>
               {allActivities.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
-            <div style={{ display:'flex', gap:8, marginTop:8 }}>
-              <input type="text" placeholder="Add custom activity…" value={newAct}
-                onChange={e => setNewAct(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddActivity())}
-                style={inputStyle} />
-              <button type="button" onClick={handleAddActivity} style={addBtnStyle}>Add</button>
-            </div>
           </div>
 
           {/* Gym session selector */}
