@@ -4,7 +4,7 @@ const ITEM_H  = 44
 const VISIBLE = 5
 const MINS    = Array.from({ length: 12 }, (_, i) => i * 5)   // 0,5,10…55
 
-function ScrollDrum({ items, value, onChange, label }) {
+function ScrollDrum({ items, value, onChange, label, flex }) {
   const ref      = useRef(null)
   const timer    = useRef(null)
   const didInit  = useRef(false)
@@ -36,7 +36,7 @@ function ScrollDrum({ items, value, onChange, label }) {
   }
 
   return (
-    <div style={{ position: 'relative', width: 60 }}>
+    <div style={{ position: 'relative', flex: flex ? 1 : undefined, minWidth: 54, width: flex ? undefined : 60 }}>
       {/* Selection highlight bar */}
       <div
         style={{
@@ -107,7 +107,7 @@ function ScrollDrum({ items, value, onChange, label }) {
   )
 }
 
-export default function TimePicker({ hVal, mVal, onHChange, onMChange, maxH = 23 }) {
+export default function TimePicker({ hVal, mVal, onHChange, onMChange, maxH = 23, fullWidth = false }) {
   const HOURS = Array.from({ length: maxH + 1 }, (_, i) => i)
   /* Round incoming minute to nearest 5 for display */
   const roundedM = mVal != null && mVal !== ''
@@ -118,18 +118,21 @@ export default function TimePicker({ hVal, mVal, onHChange, onMChange, maxH = 23
   return (
     <div
       style={{
-        display: 'inline-flex',
+        display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 6,
         background: '#191928',
         border: '1px solid rgba(255,255,255,0.07)',
         borderRadius: 16,
-        padding: '6px 20px 10px',
+        padding: '6px 12px 10px',
+        width: fullWidth ? '100%' : undefined,
+        boxSizing: 'border-box',
       }}
     >
-      <ScrollDrum items={HOURS} value={h}        onChange={onHChange} label="HH" />
-      <div style={{ fontSize:'1.8rem', fontWeight:800, color:'#334155', paddingBottom:14, userSelect:'none' }}>:</div>
-      <ScrollDrum items={MINS}  value={roundedM} onChange={onMChange} label="MM" />
+      <ScrollDrum items={HOURS} value={h}        onChange={onHChange} label="HH" flex={fullWidth} />
+      <div style={{ fontSize:'1.8rem', fontWeight:800, color:'#334155', paddingBottom:14, userSelect:'none', flexShrink:0 }}>:</div>
+      <ScrollDrum items={MINS}  value={roundedM} onChange={onMChange} label="MM" flex={fullWidth} />
     </div>
   )
 }

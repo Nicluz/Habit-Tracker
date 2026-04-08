@@ -211,16 +211,16 @@ export default function InputView() {
         <div style={card}>
           <div style={cardTitle}><span style={iconBox('rgba(59,130,246,0.15)')}>😴</span>Sleep</div>
 
-          {/* Duration + Wake side by side */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+          {/* Duration + Wake — stack on mobile, side-by-side on sm+ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ marginBottom:16 }}>
             <div>
               <div style={fLabel}><span style={dot}/>Sleep Duration</div>
-              <TimePicker maxH={14} hVal={form.sleep_h} mVal={form.sleep_m}
+              <TimePicker fullWidth maxH={14} hVal={form.sleep_h} mVal={form.sleep_m}
                 onHChange={v => set('sleep_h', v)} onMChange={v => set('sleep_m', v)} />
             </div>
             <div>
               <div style={fLabel}><span style={dot}/>Wake Up Time</div>
-              <TimePicker hVal={form.wake_h} mVal={form.wake_m}
+              <TimePicker fullWidth hVal={form.wake_h} mVal={form.wake_m}
                 onHChange={v => set('wake_h', v)} onMChange={v => set('wake_m', v)} />
             </div>
           </div>
@@ -289,16 +289,16 @@ export default function InputView() {
             <RatingGrid label="Day Rating" value={form.day_rating} onChange={v => set('day_rating', v)} />
           </div>
 
-          {/* Screen time + Social media side by side */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+          {/* Screen time + Social media — stack on mobile, side-by-side on sm+ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ marginBottom:16 }}>
             <div>
               <div style={fLabel}><span style={dot}/>Screen Time</div>
-              <TimePicker hVal={form.screen_h} mVal={form.screen_m}
+              <TimePicker fullWidth hVal={form.screen_h} mVal={form.screen_m}
                 onHChange={v => set('screen_h', v)} onMChange={v => set('screen_m', v)} />
             </div>
             <div>
               <div style={fLabel}><span style={dot}/>Social Media</div>
-              <TimePicker hVal={form.social_h} mVal={form.social_m}
+              <TimePicker fullWidth hVal={form.social_h} mVal={form.social_m}
                 onHChange={v => set('social_h', v)} onMChange={v => set('social_m', v)} />
             </div>
           </div>
