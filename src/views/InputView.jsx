@@ -275,7 +275,7 @@ export default function InputView() {
 
           <div style={{ marginBottom:16 }}>
             <div style={fLabel}><span style={dot}/>Push-up Count</div>
-            <Counter value={form.pushups} onChange={v => set('pushups', v)} />
+            <Counter value={form.pushups} onChange={v => set('pushups', v)} step={10} max={500} />
           </div>
 
           <Toggle label="Stretching done" checked={form.stretching} onChange={v => set('stretching', v)} />
@@ -312,7 +312,7 @@ export default function InputView() {
           {form.alcohol && (
             <div style={{ marginTop:14 }}>
               <div style={fLabel}><span style={dot}/>Number of Drinks</div>
-              <Counter value={form.num_drinks} onChange={v => set('num_drinks', v)} />
+              <Counter value={form.num_drinks} onChange={v => set('num_drinks', v)} step={1} max={20} />
             </div>
           )}
         </div>
