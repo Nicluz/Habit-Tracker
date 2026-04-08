@@ -8,7 +8,7 @@ function todayStr() { return new Date().toISOString().split('T')[0] }
 
 function pad(n) { return String(n).padStart(2, '0') }
 
-export default function CalendarOverview({ selectedDate, onSelectDate }) {
+export default function CalendarOverview({ selectedDate, onSelectDate, onReset }) {
   const { session } = useApp()
   const today = todayStr()
 
@@ -155,17 +155,26 @@ export default function CalendarOverview({ selectedDate, onSelectDate }) {
         })}
       </div>
 
-      {/* Legend + today shortcut */}
+      {/* Legend + today shortcut + reset */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.68rem', color: '#475569' }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block' }}/>
           entry logged
         </div>
-        {selectedDate !== today && (
-          <button onClick={goToday} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Go to today
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {onReset && entryDates.has(selectedDate) && (
+            <button
+              onClick={() => onReset()}
+              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: 0.8 }}>
+              Reset day
+            </button>
+          )}
+          {selectedDate !== today && (
+            <button onClick={goToday} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Go to today
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

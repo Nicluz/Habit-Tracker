@@ -16,10 +16,9 @@ Chart.register(
 )
 
 const PERIODS = [
-  { label: 'Week',    days: 7   },
-  { label: 'Month',   days: 30  },
-  { label: 'Quarter', days: 90  },
-  { label: 'Year',    days: 365 },
+  { label: 'Week',  days: 7   },
+  { label: 'Month', days: 30  },
+  { label: 'Year',  days: 365 },
 ]
 
 const QUALITY_MAP = { poor: 1, low: 2, fair: 3, good: 4, great: 5 }
@@ -89,13 +88,9 @@ export default function StatsView() {
 
   const avgDayRating  = avg('day_rating')
   const avgSleep      = (() => {
-    const es = entries.filter(e => e.sleep_h != null && e.wake_h != null)
+    const es = entries.filter(e => e.sleep_h != null)
     if (!es.length) return null
-    const total = es.reduce((s,e) => {
-      let diff = (e.wake_h * 60 + (e.wake_m||0)) - (e.sleep_h * 60 + (e.sleep_m||0))
-      if (diff <= 0) diff += 24*60
-      return s + diff
-    }, 0) / es.length
+    const total = es.reduce((s,e) => s + (e.sleep_h||0)*60 + (e.sleep_m||0), 0) / es.length
     return `${Math.floor(total/60)}h ${Math.round(total%60)}m`
   })()
   const trainingSessions = entries.filter(e => e.activity && e.activity !== 'Rest Day').length
@@ -165,10 +160,8 @@ export default function StatsView() {
         {
           label: 'Sleep (hrs)',
           data: entries.map(e => {
-            if (e.sleep_h == null || e.wake_h == null) return null
-            let d = (e.wake_h * 60 + (e.wake_m||0)) - (e.sleep_h * 60 + (e.sleep_m||0))
-            if (d <= 0) d += 24*60
-            return +(d/60).toFixed(2)
+            if (e.sleep_h == null) return null
+            return +((e.sleep_h||0) + (e.sleep_m||0)/60).toFixed(2)
           }),
           backgroundColor: 'rgba(59,130,246,0.6)',
           borderColor: '#3b82f6',

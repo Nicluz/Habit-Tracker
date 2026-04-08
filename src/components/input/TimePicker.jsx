@@ -2,7 +2,6 @@ import { useRef, useEffect } from 'react'
 
 const ITEM_H  = 44
 const VISIBLE = 5
-const HOURS   = Array.from({ length: 24 }, (_, i) => i)
 const MINS    = Array.from({ length: 12 }, (_, i) => i * 5)   // 0,5,10…55
 
 function ScrollDrum({ items, value, onChange, label }) {
@@ -108,12 +107,13 @@ function ScrollDrum({ items, value, onChange, label }) {
   )
 }
 
-export default function TimePicker({ hVal, mVal, onHChange, onMChange }) {
+export default function TimePicker({ hVal, mVal, onHChange, onMChange, maxH = 23 }) {
+  const HOURS = Array.from({ length: maxH + 1 }, (_, i) => i)
   /* Round incoming minute to nearest 5 for display */
   const roundedM = mVal != null && mVal !== ''
     ? Math.round(Number(mVal) / 5) * 5 % 60
     : 0
-  const h = hVal != null && hVal !== '' ? Number(hVal) : 0
+  const h = hVal != null && hVal !== '' ? Math.min(Number(hVal), maxH) : 0
 
   return (
     <div
