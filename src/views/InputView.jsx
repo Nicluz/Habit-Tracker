@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useApp, toast } from '../App'
-import { getDayKey, WEEKLY_PLAN } from '../data/trainingPlan'
 import TimePicker       from '../components/input/TimePicker'
 import Toggle           from '../components/input/Toggle'
 import RatingGrid       from '../components/input/RatingGrid'
@@ -92,7 +91,6 @@ export default function InputView() {
   const [newAct,  setNewAct]  = useState('')
   const [entryId, setEntryId] = useState(null)
 
-  const daySession = WEEKLY_PLAN[getDayKey(date)]
 
   /* ── Load entry for date ── */
   const loadEntry = useCallback(async (d) => {
@@ -203,16 +201,6 @@ export default function InputView() {
       {/* ── Calendar ── */}
       <CalendarOverview selectedDate={date} onSelectDate={setDate} onReset={entryId ? handleReset : null} />
 
-      {/* ── Training hint ── */}
-      {daySession?.type === 'gym' && (
-        <div style={{ background:'rgba(124,58,237,0.1)', border:'1px solid rgba(124,58,237,0.25)', borderRadius:12, padding:'10px 14px', marginBottom:12, display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:'1.2rem' }}>{daySession.emoji}</span>
-          <div>
-            <div style={{ fontSize:'0.8rem', fontWeight:700, color:'#9d5ff5' }}>Today's session</div>
-            <div style={{ fontSize:'0.76rem', color:'#94a3b8' }}>{daySession.name} — {daySession.subtitle}</div>
-          </div>
-        </div>
-      )}
 
       <form onSubmit={handleSave}>
 
