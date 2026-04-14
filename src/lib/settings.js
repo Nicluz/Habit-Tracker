@@ -13,6 +13,18 @@ export const DEFAULTS = {
   /* Push-up counter */
   pushup_step: 10,
   pushup_max:  300,
+  /* Mesocycle tracking */
+  mesocycle_start: '',  // YYYY-MM-DD of Week 1 Day 1
+}
+
+/** Returns current mesocycle week number (1–4) or null if no start set */
+export function getMesocycleWeek(startDate) {
+  if (!startDate) return null
+  const start = new Date(startDate + 'T12:00:00')
+  const today = new Date()
+  const diffDays = Math.floor((today - start) / 86400000)
+  if (diffDays < 0) return null
+  return ((Math.floor(diffDays / 7)) % 4) + 1
 }
 
 export function loadSettings() {

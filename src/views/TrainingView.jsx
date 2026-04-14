@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useApp, toast } from '../App'
+import { getMesocycleWeek } from '../lib/settings'
 import {
   MORNING_ROUTINE, SESSIONS, SESSION_ORDER,
   MESOCYCLE, PROGRESSION, OVERLOAD_RULES,
@@ -22,7 +23,7 @@ function fmtDate(str) {
 }
 
 export default function TrainingView() {
-  const { session } = useApp()
+  const { session, settings } = useApp()
   const today = todayStr()
 
   const [selectedSessionId, setSelectedSessionId] = useState(null)
@@ -66,7 +67,7 @@ export default function TrainingView() {
         { onConflict: 'user_id,date', ignoreDuplicates: false }
       )
       await loadHistory()
-      toast('Session logged! ✓')
+      toast('Session logged')
     }
   }
 
@@ -104,11 +105,37 @@ export default function TrainingView() {
         <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 2 }}>4-Day Split · Undulating Periodisation · Hypertrophy + Padel + Calisthenics</p>
       </div>
 
+      {/* ── Mesocycle week ── */}
+      {(() => {
+        const w = getMesocycleWeek(settings.mesocycle_start)
+        const phases = ['Accumulation','Volume+','Intensification','Deload']
+        const phaseColors = ['#10b981','#3b82f6','#f59e0b','#9d5ff5']
+        if (!w) return (
+          <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:'10px 16px', marginBottom:12, fontSize:'0.76rem', color:'#475569' }}>
+            Set your mesocycle start date in Profile to track your current week.
+          </div>
+        )
+        const col = phaseColors[w - 1]
+        return (
+          <div style={{ background:`rgba(${w===1?'16,185,129':w===2?'59,130,246':w===3?'245,158,11':'157,95,245'},0.08)`, border:`1px solid ${col}33`, borderRadius:12, padding:'10px 16px', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div>
+              <div style={{ fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:col }}>Mesocycle Week {w} of 4</div>
+              <div style={{ fontSize:'0.82rem', fontWeight:700, color:'#f1f5f9', marginTop:2 }}>{phases[w-1]}</div>
+            </div>
+            <div style={{ display:'flex', gap:6 }}>
+              {[1,2,3,4].map(i => (
+                <div key={i} style={{ width:28, height:6, borderRadius:3, background: i <= w ? col : 'rgba(255,255,255,0.07)' }}/>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
       {/* ── Today banner ── */}
       {todayDone ? (
         <div style={{ background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.25)', borderRadius:12, padding:'12px 16px', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div>
-            <div style={{ fontSize:'0.75rem', fontWeight:700, color:'#10b981' }}>✓ Today's session logged</div>
+            <div style={{ fontSize:'0.75rem', fontWeight:700, color:'#10b981' }}>Today's session logged</div>
             <div style={{ fontSize:'0.8rem', color:'#94a3b8', marginTop:2 }}>{SESSIONS[todayDone]?.name}</div>
           </div>
           <button onClick={removeCompletion} style={{ background:'none', border:'none', color:'#64748b', fontSize:'0.75rem', cursor:'pointer', fontFamily:'inherit' }}>Remove</button>
@@ -139,7 +166,6 @@ export default function TrainingView() {
                 transition:'all 0.15s',
               }}
             >
-              <span style={{ fontSize:'1.3rem', flexShrink:0 }}>{s.emoji}</span>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:'0.875rem', fontWeight:700, color: isSelected ? '#f1f5f9' : '#cbd5e1' }}>
                   {s.name}
@@ -209,14 +235,14 @@ export default function TrainingView() {
           <div style={{ marginTop:16 }}>
             {todayDone === activeSession.id ? (
               <div style={{ textAlign:'center', padding:'12px', borderRadius:10, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.3)', color:'#10b981', fontWeight:700, fontSize:'0.9rem' }}>
-                ✓ This session logged today
+                This session logged today
               </div>
             ) : (
               <button
                 onClick={markComplete}
                 style={{ width:'100%', padding:'13px', borderRadius:10, border:'1px solid rgba(16,185,129,0.3)', background:'rgba(16,185,129,0.1)', color:'#10b981', fontFamily:'inherit', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', transition:'all 0.15s' }}
               >
-                Log as Today's Session ✓
+                Log as Today's Session
               </button>
             )}
           </div>
@@ -226,15 +252,11 @@ export default function TrainingView() {
       {/* ── Recent history ── */}
       {history.length > 0 && (
         <div style={card}>
-          <div style={cardTitle}>
-            <span style={{ width:28, height:28, borderRadius:8, background:'rgba(59,130,246,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>📋</span>
-            Recent Sessions
-          </div>
+          <div style={cardTitle}>Recent Sessions</div>
           {history.slice(0, 10).map((r, i) => {
             const s = SESSIONS[r.session_key]
             return (
               <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ fontSize:'1rem' }}>{s?.emoji || '🏋️'}</span>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:'0.8rem', fontWeight:600 }}>{s?.name || r.session_key}</div>
                   <div style={{ fontSize:'0.71rem', color:'#64748b' }}>{s?.subtitle}</div>
@@ -249,7 +271,6 @@ export default function TrainingView() {
       {/* ── Morning Routine ── */}
       <div style={{ ...card, background:'linear-gradient(135deg,rgba(124,58,237,0.08) 0%,rgba(59,130,246,0.06) 100%)', borderColor:'rgba(124,58,237,0.25)' }}>
         <div style={{ ...cardTitle, cursor:'pointer', marginBottom: morningOpen ? 16 : 0 }} onClick={() => setMorningOpen(o => !o)}>
-          <span style={{ width:28, height:28, borderRadius:8, background:'rgba(124,58,237,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>🌅</span>
           <span style={{ flex:1 }}>Daily Morning Routine</span>
           <span style={{ fontSize:'0.72rem', color:'#64748b' }}>~18–20 min</span>
           <span style={{ color:'#64748b', transition:'transform 0.2s', transform: morningOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
@@ -322,10 +343,7 @@ export default function TrainingView() {
 
       {/* ── 4-Week Mesocycle ── */}
       <div style={card}>
-        <div style={cardTitle}>
-          <span style={{ width:28, height:28, borderRadius:8, background:'rgba(245,158,11,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>📅</span>
-          4-Week Mesocycle
-        </div>
+        <div style={cardTitle}>4-Week Mesocycle</div>
         <div style={{ overflowX:'auto' }}>
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'0.82rem' }}>
             <thead>
@@ -356,7 +374,6 @@ export default function TrainingView() {
           style={{ ...cardTitle, cursor:'pointer', marginBottom: progOpen ? 16 : 0 }}
           onClick={() => setProgOpen(o => !o)}
         >
-          <span style={{ width:28, height:28, borderRadius:8, background:'rgba(239,68,68,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>📈</span>
           <span style={{ flex:1 }}>Calisthenics Progression Roadmap</span>
           <span style={{ color:'#64748b', transition:'transform 0.2s', transform: progOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
         </div>

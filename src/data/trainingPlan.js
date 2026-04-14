@@ -6,7 +6,7 @@ export const MORNING_ROUTINE = {
     {
       id: 'b1',
       name: 'Block 1 – Push-Ups & Plank',
-      duration: '8 min',
+      duration: '5 min',
       exercises: [
         {
           name: 'Push-Up Variation',
@@ -48,22 +48,21 @@ export const MORNING_ROUTINE = {
     },
     {
       id: 'b3',
-      name: 'Block 3 – Handstand Progression',
-      duration: '5 min',
+      name: 'Block 3 – Stretching',
+      duration: '10 min',
       exercises: [
-        { name: 'Wall Handstand Hold',    sets: 2, reps: '30–45 sec', note: 'Stable wall contact, full body tension' },
-        { name: 'Negative HSPU at Wall', sets: 3, reps: '3–5',       note: '5 sec descent, rest at bottom then climb back up' },
+        { name: "World's Greatest Stretch",   sets: 1, reps: '5 each side', note: 'Full body mobility — lunge + thoracic rotation + reach' },
+        { name: 'Soleus Stretch (knee bent)', sets: 1, reps: '60 sec each', note: 'Deep calf / shin splints — knee bent, heel on floor, lean into wall' },
+        { name: '90/90 Hip Stretch',          sets: 1, reps: '60 sec each', note: 'Hip internal + external rotation / Padel' },
+        { name: 'Gluteus Stretch (Figure-4)', sets: 1, reps: '60 sec each', note: 'Lying figure-4 — glutes / hips / lower back' },
       ],
     },
     {
       id: 'b4',
-      name: 'Block 4 – Stretching',
-      duration: '10 min',
+      name: 'Block 4 – Meditation',
+      duration: '5 min',
       exercises: [
-        { name: "World's Greatest Stretch",      sets: 1, reps: '5 each side', note: 'Full body mobility — lunge + thoracic rotation + reach' },
-        { name: 'Soleus Stretch (knee bent)',    sets: 1, reps: '60 sec each', note: 'Deep calf / shin splints — knee bent, heel on floor, lean into wall' },
-        { name: '90/90 Hip Stretch',             sets: 1, reps: '60 sec each', note: 'Hip internal + external rotation / Padel' },
-        { name: 'Gluteus Stretch (Figure-4)',    sets: 1, reps: '60 sec each', note: 'Lying figure-4 — glutes / hips / lower back' },
+        { name: 'Seated Meditation', sets: 1, reps: '5 min', note: 'Quiet seated position, focus on breath' },
       ],
     },
   ],
@@ -81,7 +80,6 @@ export const SESSIONS = {
     id: 'upper_a',
     name: 'Session 1 — Upper A',
     subtitle: 'Push + Horizontal Calisthenics',
-    emoji: '💪',
     duration: '65–70 min',
     warmup: 'Band pull-aparts — 2×20 · Face pulls (band) — 2×15 · Arm circles + thoracic rotation — 2 min',
     exercises: [
@@ -99,7 +97,6 @@ export const SESSIONS = {
     id: 'lower_a',
     name: 'Session 2 — Lower A',
     subtitle: 'Quad Dominant + Physio',
-    emoji: '🦵',
     duration: '65–70 min',
     warmup: 'Hip circles — 10 each direction · Leg swings (front/back + lateral) — 10 each · Glute bridges — 2×15 · Side-lying leg raise — 2×15/side',
     exercises: [
@@ -118,7 +115,6 @@ export const SESSIONS = {
     id: 'upper_b',
     name: 'Session 3 — Upper B',
     subtitle: 'Pull + Vertical Calisthenics',
-    emoji: '🏋️',
     duration: '65–70 min',
     warmup: 'Dead hang — 2×30s · Scapular pull-ups — 2×10 · Band dislocates — 2×10 · Wrist circles — 1 min',
     sessionNote: 'If Padel is in the evening — keep shoulder volume within limits',
@@ -137,7 +133,6 @@ export const SESSIONS = {
     id: 'lower_b',
     name: 'Session 4 — Lower B',
     subtitle: 'Posterior Chain + Padel Power',
-    emoji: '🔥',
     duration: '65–70 min',
     warmup: 'Hip 90/90 stretch — 2 min · Glute bridges — 2×15 · Monster walks (band) — 2×10m · Lateral lunge BW — 2×10/side',
     exercises: [
@@ -157,7 +152,6 @@ export const SESSIONS = {
     id: 'upper_c',
     name: 'Session 5 — Upper C',
     subtitle: 'Push + Pull Combined (optional)',
-    emoji: '⚡',
     duration: '65–70 min',
     warmup: 'Band pull-aparts — 2×20 · Dead hang — 2×20s · Arm circles + shoulder CARs — 2 min',
     sessionNote: 'Moderate intensity (RPE 6-7). Cables / DBs / machines — no heavy barbell compounds.',

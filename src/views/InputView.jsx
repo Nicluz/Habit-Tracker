@@ -16,10 +16,11 @@ const BUILT_IN_ACTIVITIES = [
 
 /* ── Gym session selector ─────────────────────────── */
 const GYM_SESSIONS = [
-  { key: 'upper_a',  label: 'Upper Body A', desc: 'Mon · Push + Skill'   },
-  { key: 'legs',     label: 'Legs',          desc: 'Tue · Strength + Physio' },
-  { key: 'upper_b',  label: 'Upper Body B',  desc: 'Thu · Pull + Skill'  },
-  { key: 'legs_fri', label: 'Legs',          desc: 'Fri · Strength + Physio' },
+  { key: 'upper_a', label: 'Session 1 — Upper A', desc: 'Push + Horizontal Calisthenics' },
+  { key: 'lower_a', label: 'Session 2 — Lower A', desc: 'Quad Dominant + Physio'         },
+  { key: 'upper_b', label: 'Session 3 — Upper B', desc: 'Pull + Vertical Calisthenics'   },
+  { key: 'lower_b', label: 'Session 4 — Lower B', desc: 'Posterior Chain + Padel Power'  },
+  { key: 'upper_c', label: 'Session 5 — Upper C', desc: 'Push + Pull Combined (optional)'},
 ]
 
 /* ── Feelings (5 user-rated, overall auto) ────────── */
@@ -246,7 +247,7 @@ export default function InputView() {
           {form.activity === 'Gym' && (
             <div style={{ marginBottom:16 }}>
               <div style={fLabel}><span style={dot}/>Which Session?</div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {GYM_SESSIONS.map(s => (
                   <button key={s.key} type="button" onClick={() => set('gym_session', s.key)}
                     style={{

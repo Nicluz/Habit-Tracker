@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useApp, toast } from '../App'
+import { getMesocycleWeek } from '../lib/settings'
 import TimePicker from '../components/input/TimePicker'
 import Toggle     from '../components/input/Toggle'
 
@@ -121,6 +122,35 @@ export default function SettingsView() {
             onHChange={v => set('social_limit_h', v)}
             onMChange={v => set('social_limit_m', v)}
           />
+        </div>
+
+        <div style={divider}/>
+
+        {/* Mesocycle */}
+        <div style={{ ...subTitle, marginTop: 0 }}>Mesocycle Tracking</div>
+        <div style={{ marginBottom: 14 }}>
+          <div style={fLabel}>Week 1 Start Date</div>
+          <input
+            type="date"
+            value={settings.mesocycle_start}
+            onChange={e => set('mesocycle_start', e.target.value)}
+            style={{ width:'100%', background:'#191928', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, color:'#f1f5f9', fontFamily:'inherit', fontSize:'0.875rem', padding:'9px 12px', outline:'none', colorScheme:'dark', boxSizing:'border-box' }}
+          />
+          <div style={{ marginTop:10, padding:'10px 14px', borderRadius:10, background:'rgba(124,58,237,0.08)', border:'1px solid rgba(124,58,237,0.15)' }}>
+            {settings.mesocycle_start ? (() => {
+              const w = getMesocycleWeek(settings.mesocycle_start)
+              const phases = ['Accumulation','Volume+','Intensification','Deload']
+              return (
+                <p style={{ fontSize:'0.8rem', color:'#9d5ff5', margin:0, fontWeight:600 }}>
+                  Currently: Week {w} — {phases[w - 1]}
+                </p>
+              )
+            })() : (
+              <p style={{ fontSize:'0.75rem', color:'#475569', margin:0 }}>
+                Set the start date to track your mesocycle week automatically.
+              </p>
+            )}
+          </div>
         </div>
 
         <div style={divider}/>
