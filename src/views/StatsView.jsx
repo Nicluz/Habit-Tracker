@@ -55,12 +55,30 @@ function useChart(ref, config, deps) {
   }, deps) // eslint-disable-line
 }
 
-function StatChip({ label, value, sub, color = '#f1f5f9' }) {
+function StatChip({ label, value, sub, color = '#f1f5f9', large = false }) {
   return (
-    <div style={{ background: '#111120', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
+    <div style={{ background: '#111120', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: large ? '20px 24px' : 16, boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
       <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.03em', color }}>{value ?? '—'}</div>
+      <div style={{ fontSize: large ? '2.6rem' : '1.6rem', fontWeight: 800, letterSpacing: '-0.03em', color }}>{value ?? '—'}</div>
       {sub && <div style={{ fontSize: '0.73rem', color: '#64748b', marginTop: 2 }}>{sub}</div>}
+    </div>
+  )
+}
+
+function SleepRow({ bedTime, wakeTime, sleepDur }) {
+  const items = [
+    { label: 'Avg Bed Time',  value: bedTime,   color: '#818cf8' },
+    { label: 'Avg Wake Up',   value: wakeTime,  color: '#06b6d4' },
+    { label: 'Avg Sleep',     value: sleepDur,  color: '#3b82f6' },
+  ]
+  return (
+    <div style={{ background: '#111120', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.4)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0 }}>
+      {items.map((it, i) => (
+        <div key={it.label} style={{ textAlign: 'center', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none', padding: '0 8px' }}>
+          <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 6 }}>{it.label}</div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: it.color }}>{it.value ?? '—'}</div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -131,19 +149,42 @@ export default function StatsView() {
   })()
 
   const avgWake = (() => {
-    const es = entries.filter(e => e.wake_h != null)
+    const es = entries.filter(e => e.wake_h != null && (e.wake_h || 0) + (e.wake_m || 0) > 0)
     if (!es.length) return null
     const m = es.reduce((s, e) => s + (e.wake_h || 0) * 60 + (e.wake_m || 0), 0) / es.length
     return `${Math.floor(m / 60)}:${String(Math.round(m % 60)).padStart(2, '0')}`
   })()
 
+  const avgBedTime = (() => {
+    const es = entries.filter(e => e.wake_h != null && ((e.wake_h || 0) + (e.wake_m || 0) > 0) && ((e.sleep_h || 0) + (e.sleep_m || 0) > 0))
+    if (!es.length) return null
+    const mins = es.map(e => {
+      const bed = (e.wake_h || 0) * 60 + (e.wake_m || 0) - ((e.sleep_h || 0) * 60 + (e.sleep_m || 0))
+      return ((bed % 1440) + 1440) % 1440
+    })
+    const avg = mins.reduce((s, v) => s + v, 0) / mins.length
+    const h = Math.floor(avg / 60)
+    const m = Math.round(avg % 60)
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
+  })()
+
   const trainingSessions = entries.filter(e => e.activity && e.activity !== 'Rest Day').length
 
   const morningStreak = (() => {
-    let s = 0
     const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date))
-    for (const e of sorted) { if (e.morning_routine) s++; else break }
-    return s
+    let streak = 0
+    let prev = null
+    for (const e of sorted) {
+      const done = e.morning_routine && e.morning_routine !== 'no'
+      if (!done) break
+      if (prev !== null) {
+        const diff = (new Date(prev + 'T12:00:00') - new Date(e.date + 'T12:00:00')) / 86400000
+        if (diff !== 1) break
+      }
+      streak++
+      prev = e.date
+    }
+    return streak
   })()
 
   const avgPushups = (() => {
@@ -470,17 +511,33 @@ export default function StatsView() {
       ) : (
         <>
           {/* ── Summary chips ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <StatChip label="Avg Day Rating"    value={avgDayRating}           color="#9d5ff5"  sub={`over ${n} days`}         />
-            <StatChip label="Avg Sleep"         value={avgSleep}               color="#3b82f6"                                  />
-            <StatChip label="Avg Wake Up"       value={avgWake}                color="#06b6d4"                                  />
-            <StatChip label="Training Sessions" value={trainingSessions}       color="#10b981"  sub="excl. rest days"           />
-            <StatChip label="Morning Streak"    value={morningStreak}          color="#f59e0b"  sub="consecutive days"          />
-            <StatChip label="Avg Push-ups"      value={avgPushups}             color="#ef4444"  sub="on training days"          />
-            <StatChip label="Avg Screen Time"   value={avgScreen}              color="#f97316"                                  />
-            <StatChip label="Avg Social Media"  value={avgSocial}              color="#ec4899"                                  />
-            <StatChip label="Total Drinks"      value={totalDrinks}            color="#22c55e"  sub={`over ${n} days`}         />
-            <StatChip label="Reading Days"      value={readingDays}            color="#14b8a6"  sub={`of ${n} days`}           />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+            {/* Day rating — full width, large */}
+            <StatChip label="Avg Day Rating" value={avgDayRating} color="#9d5ff5" sub={`over ${n} days`} large />
+
+            {/* Sleep row — 3 stats in one card */}
+            <SleepRow bedTime={avgBedTime} wakeTime={avgWake} sleepDur={avgSleep} />
+
+            {/* Screen + Social */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <StatChip label="Avg Screen Time"  value={avgScreen} color="#f97316" />
+              <StatChip label="Avg Social Media" value={avgSocial} color="#ec4899" />
+            </div>
+
+            {/* Morning streak + Reading */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <StatChip label="Morning Streak" value={morningStreak} color="#f59e0b" sub="consecutive days" />
+              <StatChip label="Reading Days"   value={readingDays}   color="#14b8a6" sub={`of ${n} days`}  />
+            </div>
+
+            {/* Training + Push-ups */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <StatChip label="Training Sessions" value={trainingSessions} color="#10b981" sub="excl. rest days" />
+              <StatChip label="Avg Push-ups"      value={avgPushups}       color="#ef4444" sub="on active days"  />
+            </div>
+
+            {/* Total drinks */}
+            <StatChip label="Total Drinks" value={totalDrinks} color="#22c55e" sub={`over ${n} days`} />
           </div>
 
           {/* ── Day Rating ── */}
