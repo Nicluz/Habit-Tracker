@@ -141,31 +141,41 @@ export default function StatsView() {
   const avgDayRatingNum = avgOf('day_rating')
   const avgDayRating    = avgDayRatingNum != null ? avgDayRatingNum.toFixed(1) : null
 
+  const fmtHM = (totalMins) => {
+    const t = ((Math.round(totalMins) % 1440) + 1440) % 1440
+    return `${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`
+  }
+
   const avgSleep = (() => {
-    const es = entries.filter(e => e.sleep_h != null)
+    const es = entries.filter(e => (e.sleep_h || 0) * 60 + (e.sleep_m || 0) > 0)
     if (!es.length) return null
     const m = es.reduce((s, e) => s + (e.sleep_h || 0) * 60 + (e.sleep_m || 0), 0) / es.length
     return `${Math.floor(m / 60)}h ${Math.round(m % 60)}m`
   })()
 
   const avgWake = (() => {
-    const es = entries.filter(e => e.wake_h != null && (e.wake_h || 0) + (e.wake_m || 0) > 0)
+    const es = entries.filter(e => (e.wake_h || 0) * 60 + (e.wake_m || 0) > 0)
     if (!es.length) return null
     const m = es.reduce((s, e) => s + (e.wake_h || 0) * 60 + (e.wake_m || 0), 0) / es.length
-    return `${Math.floor(m / 60)}:${String(Math.round(m % 60)).padStart(2, '0')}`
+    return fmtHM(m)
   })()
 
   const avgBedTime = (() => {
-    const es = entries.filter(e => e.wake_h != null && ((e.wake_h || 0) + (e.wake_m || 0) > 0) && ((e.sleep_h || 0) + (e.sleep_m || 0) > 0))
+    // Only entries where both wake and sleep duration are set
+    const es = entries.filter(e =>
+      (e.wake_h || 0) * 60 + (e.wake_m || 0) > 0 &&
+      (e.sleep_h || 0) * 60 + (e.sleep_m || 0) > 0
+    )
     if (!es.length) return null
+    // Compute raw bed time for each entry, wrapped 0-1439
     const mins = es.map(e => {
-      const bed = (e.wake_h || 0) * 60 + (e.wake_m || 0) - ((e.sleep_h || 0) * 60 + (e.sleep_m || 0))
-      return ((bed % 1440) + 1440) % 1440
+      const raw = (e.wake_h || 0) * 60 + (e.wake_m || 0) - ((e.sleep_h || 0) * 60 + (e.sleep_m || 0))
+      return ((raw % 1440) + 1440) % 1440
     })
-    const avg = mins.reduce((s, v) => s + v, 0) / mins.length
-    const h = Math.floor(avg / 60)
-    const m = Math.round(avg % 60)
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
+    // Circular mean: shift times before noon (+12h) so all bed times cluster near midnight
+    const shifted = mins.map(m => m < 720 ? m + 1440 : m)
+    const avg = shifted.reduce((s, v) => s + v, 0) / shifted.length
+    return fmtHM(avg)
   })()
 
   const trainingSessions = entries.filter(e => e.activity && e.activity !== 'Rest Day').length
@@ -207,8 +217,10 @@ export default function StatsView() {
     return `${Math.floor(m / 60)}h ${Math.round(m % 60)}m`
   })()
 
-  const totalDrinks = sumOf('num_drinks')
-  const readingDays = countOf('reading')
+  const alcoholDays     = entries.filter(e => e.alcohol).length
+  const alcoholFreeDays = entries.filter(e => !e.alcohol).length
+  const totalDrinks     = entries.filter(e => e.alcohol).reduce((s, e) => s + (Number(e.num_drinks) || 0), 0)
+  const readingDays     = countOf('reading')
 
   /* ─── Chart data arrays ──────────────────────────── */
   const labels = entries.map(e => {
@@ -536,8 +548,11 @@ export default function StatsView() {
               <StatChip label="Avg Push-ups"      value={avgPushups}       color="#ef4444" sub="on active days"  />
             </div>
 
-            {/* Total drinks */}
-            <StatChip label="Total Drinks" value={totalDrinks} color="#22c55e" sub={`over ${n} days`} />
+            {/* Alcohol — bottom */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <StatChip label="Alcohol-Free Days" value={alcoholFreeDays} color="#22c55e" sub={`of ${n} days`} />
+              <StatChip label="Drinking Days"     value={alcoholDays}     color="#94a3b8" sub={alcoholDays > 0 ? `${totalDrinks} drinks total` : 'none'} />
+            </div>
           </div>
 
           {/* ── Day Rating ── */}
