@@ -49,7 +49,7 @@ export const MORNING_ROUTINE = {
     {
       id: 'b3',
       name: 'Block 3 – Stretching',
-      duration: '10 min',
+      duration: '5 min',
       exercises: [
         { name: "World's Greatest Stretch",   sets: 1, reps: '5 each side', note: 'Full body mobility — lunge + thoracic rotation + reach' },
         { name: 'Soleus Stretch (knee bent)', sets: 1, reps: '60 sec each', note: 'Deep calf / shin splints — knee bent, heel on floor, lean into wall' },

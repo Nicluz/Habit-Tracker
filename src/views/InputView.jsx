@@ -45,7 +45,7 @@ const EMPTY = {
   /* sleep_h / sleep_m now store DURATION (not time-of-day) */
   sleep_h: 7,  sleep_m: 30,
   wake_h: 7,   wake_m: 0,
-  sleep_quality: null, morning_routine: false,
+  sleep_quality: null, morning_routine: 'no',
   activity: '', gym_session: '',
   pushups: 0, stretching: false,
   day_rating: null,
@@ -243,7 +243,23 @@ export default function InputView() {
             <QualityPicker value={form.sleep_quality} onChange={v => set('sleep_quality', v)} />
           </div>
 
-          <Toggle label="Morning routine completed" checked={form.morning_routine} onChange={v => set('morning_routine', v)} />
+          <div>
+            <div style={fLabel}><span style={dot}/>Morning Routine</div>
+            <div style={{ display:'flex', gap:8 }}>
+              {['no', 'short', 'long'].map(opt => (
+                <button key={opt} type="button" onClick={() => set('morning_routine', opt)}
+                  style={{
+                    flex:1, padding:'9px 0', borderRadius:10, border:`1px solid ${form.morning_routine === opt ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.07)'}`,
+                    background: form.morning_routine === opt ? 'rgba(124,58,237,0.18)' : '#191928',
+                    color: form.morning_routine === opt ? '#9d5ff5' : '#94a3b8',
+                    fontFamily:'inherit', fontSize:'0.8125rem', fontWeight:600, cursor:'pointer',
+                    textTransform:'capitalize', transition:'all 0.15s',
+                  }}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ══ TRAINING ══ */}
