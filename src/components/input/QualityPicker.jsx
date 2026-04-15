@@ -1,4 +1,4 @@
-const OPTIONS = [
+const DEFAULT_OPTIONS = [
   { val: 'poor',  label: 'Poor',  color: '#ef4444', bg: 'rgba(239,68,68,0.18)'   },
   { val: 'low',   label: 'Low',   color: '#f97316', bg: 'rgba(249,115,22,0.18)'  },
   { val: 'fair',  label: 'Fair',  color: '#f59e0b', bg: 'rgba(245,158,11,0.18)'  },
@@ -6,10 +6,19 @@ const OPTIONS = [
   { val: 'great', label: 'Great', color: '#10b981', bg: 'rgba(16,185,129,0.18)'  },
 ]
 
-export default function QualityPicker({ value, onChange }) {
+export const ENERGY_OPTIONS = [
+  { val: 'exhausted', label: 'Exhausted', color: '#ef4444', bg: 'rgba(239,68,68,0.18)'   },
+  { val: 'tired',     label: 'Tired',     color: '#f97316', bg: 'rgba(249,115,22,0.18)'  },
+  { val: 'neutral',   label: 'Neutral',   color: '#f59e0b', bg: 'rgba(245,158,11,0.18)'  },
+  { val: 'good',      label: 'Good',      color: '#22c55e', bg: 'rgba(34,197,94,0.18)'   },
+  { val: 'energized', label: 'Energized', color: '#10b981', bg: 'rgba(16,185,129,0.18)'  },
+]
+
+export default function QualityPicker({ value, onChange, options }) {
+  const opts = options ?? DEFAULT_OPTIONS
   return (
     <div style={{ display: 'flex', gap: 6 }}>
-      {OPTIONS.map(o => {
+      {opts.map(o => {
         const active = value === o.val
         return (
           <button

@@ -4,7 +4,7 @@ import { useApp, toast } from '../App'
 import TimePicker       from '../components/input/TimePicker'
 import Toggle           from '../components/input/Toggle'
 import RatingGrid       from '../components/input/RatingGrid'
-import QualityPicker    from '../components/input/QualityPicker'
+import QualityPicker, { ENERGY_OPTIONS } from '../components/input/QualityPicker'
 import Counter          from '../components/input/Counter'
 import CalendarOverview from '../components/CalendarOverview'
 
@@ -45,7 +45,7 @@ const EMPTY = {
   /* sleep_h / sleep_m now store DURATION (not time-of-day) */
   sleep_h: 7,  sleep_m: 30,
   wake_h: 7,   wake_m: 0,
-  sleep_quality: null, morning_routine: 'no',
+  sleep_quality: null, energy_level: null, morning_routine: 'no',
   activity: '', gym_session: '',
   pushups: 0, stretching: false,
   day_rating: null,
@@ -241,6 +241,11 @@ export default function InputView() {
           <div style={{ marginBottom:16 }}>
             <div style={fLabel}><span style={dot}/>Sleep Quality</div>
             <QualityPicker value={form.sleep_quality} onChange={v => set('sleep_quality', v)} />
+          </div>
+
+          <div style={{ marginBottom:16 }}>
+            <div style={fLabel}><span style={dot}/>Energy Level Today</div>
+            <QualityPicker value={form.energy_level} onChange={v => set('energy_level', v)} options={ENERGY_OPTIONS} />
           </div>
 
           <div>
