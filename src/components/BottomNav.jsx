@@ -22,7 +22,7 @@ const items = [
   },
   {
     id: 'training',
-    label: 'Plan',
+    label: 'Training',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
         <path d="M6 4v16M18 4v16M3 8h4m10 0h4M3 16h4m10 0h4"/>

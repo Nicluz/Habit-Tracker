@@ -143,7 +143,21 @@ export default function InputView() {
       ? await supabase.from('daily_entries').update(payload).eq('id', entryId)
       : await supabase.from('daily_entries').insert(payload)
     if (error) { toast(error.message, 'error') }
-    else { setSaved(true); toast('Entry saved!'); if (!entryId) loadEntry(date) }
+    else {
+      setSaved(true); toast('Entry saved!'); if (!entryId) loadEntry(date)
+      // Sync gym session to training_completions
+      if (form.activity === 'Gym' && form.gym_session) {
+        await supabase.from('training_completions').upsert(
+          { user_id: session.user.id, date, session_key: form.gym_session },
+          { onConflict: 'user_id,date' }
+        )
+      } else {
+        await supabase.from('training_completions')
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('date', date)
+      }
+    }
     setSaving(false)
   }
 
@@ -152,6 +166,7 @@ export default function InputView() {
     if (!entryId) return
     if (!window.confirm('Delete all data for this day?')) return
     await supabase.from('daily_entries').delete().eq('id', entryId)
+    await supabase.from('training_completions').delete().eq('user_id', session.user.id).eq('date', date)
     setEntryId(null)
     setForm(EMPTY)
     setSaved(false)

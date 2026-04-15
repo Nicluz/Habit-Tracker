@@ -101,7 +101,6 @@ export const SESSIONS = {
     warmup: 'Hip circles — 10 each direction · Leg swings (front/back + lateral) — 10 each · Glute bridges — 2×15 · Side-lying leg raise — 2×15/side',
     exercises: [
       { name: 'Back Squat',             category: 'Strength', sets: '3/4/4-5/3', reps: 'W1:8-10  W2:6-8  W3:5-6  W4:10',        rest: '3 min',  note: 'Start 60 kg. Prioritize depth.',                         alt: 'Safety Bar / Goblet Squat' },
-      { name: 'Bulgarian Split Squat',  category: 'Strength', sets: '3',         reps: 'W1:10/L  W2:8/L  W3:6/L  W4:10/L',      rest: '90s',    note: 'DB or barbell. Unilateral stability.',                   alt: 'Reverse Lunge'             },
       { name: 'Romanian Deadlift',      category: 'Strength', sets: '3',         reps: 'W1:10-12  W2:10  W3:8  W4:12',           rest: '2 min',  note: 'Start 50-60 kg. Hip hinge, neutral spine.',              alt: 'Single-Leg RDL'            },
       { name: 'Leg Curl (machine)',     category: 'Strength', sets: '3',         reps: 'W1:12-15  W2:12  W3:10-12  W4:15',       rest: '90s',    note: 'Slow eccentric (3s).',                                   alt: 'Nordic Curl'               },
       { name: 'Pistol Squat',           category: 'Physio',   sets: '3',         reps: 'W1:5-8/L  W2:5-8/L  W3:6-8/L  W4:8/L', rest: '90s',    note: 'TRX/pole-assisted → unassisted.',                        alt: 'Assisted Pistol'           },
@@ -121,7 +120,7 @@ export const SESSIONS = {
     exercises: [
       { name: 'Weighted Pull-ups',         category: 'Calisthenics', sets: '4',         reps: 'W1:6-8  W2:5-6  W3:4-5  W4:8',           rest: '3 min',    note: 'Start +5 kg → +20 kg goal. Pronated grip.',       alt: 'Archer Pull-ups'       },
       { name: 'Muscle-Up Practice',        category: 'Calisthenics', sets: '3',         reps: 'W1:Max+neg  W2:Max+band  W3:Max Q  W4:2-3',rest: '3–4 min',  note: 'See Progression Roadmap. Skill priority.',         alt: 'Band-assisted MU'      },
-      { name: 'Pendlay Row',               category: 'Strength',     sets: '3/4/4-5/3', reps: 'W1:8-10  W2:6-8  W3:5-6  W4:10',         rest: '2.5 min',  note: 'Bar to floor each rep. Explosive concentric.',     alt: 'DB Row'                },
+      { name: 'DB Row (unilateral)',        category: 'Strength',     sets: '3/4/4-5/3', reps: 'W1:10-12  W2:8-10  W3:6-8  W4:12',        rest: '2 min',    note: 'Chest on bench. +2.5 kg per double progression. Full stretch at bottom.', alt: 'Cable Row (seated)' },
       { name: 'Wall HSPU Progression',     category: 'Calisthenics', sets: '3',         reps: 'W1:Max½  W2:Max¾  W3:Max full  W4:Max easy',rest: '2 min',   note: 'Phase goal: head to ab mat. 3s descent.',          alt: 'Pike Push-ups'         },
       { name: 'Chest-Supported Row',       category: 'Strength',     sets: '3',         reps: 'W1:12-15  W2:12  W3:10-12  W4:15',        rest: '90s',      note: 'Machine or incline DB. Target rhomboids.',         alt: 'Seated Cable Row'      },
       { name: 'Face Pulls + Band PA [SS]', category: 'Strength',     sets: '3',         reps: '15 each all weeks',                         rest: '60s',      note: 'Superset. Rotator cuff before Padel PM.',          alt: 'Band External Rot.'    },
@@ -136,7 +135,7 @@ export const SESSIONS = {
     duration: '65–70 min',
     warmup: 'Hip 90/90 stretch — 2 min · Glute bridges — 2×15 · Monster walks (band) — 2×10m · Lateral lunge BW — 2×10/side',
     exercises: [
-      { name: 'Hip Thrust (Barbell)',       category: 'Strength', sets: '4', reps: 'W1:10  W2:8  W3:6  W4:12',                rest: '2 min', note: 'Start 60-80 kg. Drive heels. Key Padel hip power.',       alt: 'Single-Leg Hip Thrust'   },
+      { name: 'Bulgarian Split Squat',      category: 'Strength', sets: '3/4/4-5/3', reps: 'W1:10/L  W2:8/L  W3:6/L  W4:10/L', rest: '90s',   note: 'DB or barbell. Unilateral stability.',                    alt: 'Reverse Lunge'           },
       { name: 'Explosive Lateral Step-Up', category: 'Padel',    sets: '3', reps: 'W1:8-10/s  W2:8/s  W3:8/s  W4:10/s',     rest: '90s',   note: 'Box 40-50 cm. Explosive drive, knee high. Shin-safe.',   alt: 'Lateral Lunge'           },
       { name: 'Nordic Hamstring Curl',     category: 'Strength', sets: '3', reps: 'W1:6  W2:5  W3:4  W4:6',                  rest: '2 min', note: 'Partner or lat pulldown machine. Best hamstring prehab.', alt: 'Glute-Ham Raise'         },
       { name: 'Lateral Band Walk (heavy)', category: 'Padel',    sets: '3', reps: 'W1:15/s  W2:15/s  W3:12/s  W4:15/s',     rest: '60s',   note: 'Hip abductor strength. Lateral court coverage.',         alt: 'Cable Hip Abduction'     },
