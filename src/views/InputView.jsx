@@ -43,8 +43,8 @@ function fmtDate(str) {
 
 const EMPTY = {
   /* sleep_h / sleep_m now store DURATION (not time-of-day) */
-  sleep_h: 7,  sleep_m: 30,
-  wake_h: 7,   wake_m: 0,
+  sleep_h: 0,  sleep_m: 0,
+  wake_h: 0,   wake_m: 0,
   sleep_quality: null, energy_level: null, morning_routine: 'no',
   activity: '', gym_session: '',
   pushups: 0, stretching: false,
@@ -181,6 +181,24 @@ export default function InputView() {
     set('activity', t)
   }
 
+  /* ── Sleep window (from → to) ── */
+  const sleepWindow = (() => {
+    const durMins = form.sleep_h * 60 + form.sleep_m
+    const wakeMins = form.wake_h * 60 + form.wake_m
+    if (!durMins && !wakeMins) return null
+    const fmt = m => {
+      const h = Math.floor(((m % 1440) + 1440) % 1440 / 60)
+      const min = ((m % 1440) + 1440) % 1440 % 60
+      return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`
+    }
+    const fromMins = wakeMins - durMins
+    return {
+      from: fmt(fromMins),
+      to: fmt(wakeMins),
+      duration: `${form.sleep_h}h${form.sleep_m ? ` ${form.sleep_m}m` : ''}`,
+    }
+  })()
+
   /* ── Over-limit helpers ── */
   const screenMins = form.screen_h * 60 + form.screen_m
   const limitScreenMins = settings.screen_limit_h * 60 + settings.screen_limit_m
@@ -225,7 +243,7 @@ export default function InputView() {
           <div style={cardTitle}><span style={iconBox('rgba(59,130,246,0.15)')}>😴</span>Sleep</div>
 
           {/* Duration + Wake — stack on mobile, side-by-side on sm+ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ marginBottom:16 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ marginBottom: sleepWindow ? 8 : 16 }}>
             <div>
               <div style={fLabel}><span style={dot}/>Sleep Duration</div>
               <TimePicker fullWidth maxH={14} hVal={form.sleep_h} mVal={form.sleep_m}
@@ -237,6 +255,14 @@ export default function InputView() {
                 onHChange={v => set('wake_h', v)} onMChange={v => set('wake_m', v)} />
             </div>
           </div>
+          {sleepWindow && (
+            <div style={{ marginBottom:16, fontSize:'0.78rem', color:'#64748b', textAlign:'center', letterSpacing:'0.03em' }}>
+              <span style={{ color:'#94a3b8', fontWeight:600 }}>{sleepWindow.from}</span>
+              <span style={{ margin:'0 8px', color:'#475569' }}>→</span>
+              <span style={{ color:'#94a3b8', fontWeight:600 }}>{sleepWindow.to}</span>
+              <span style={{ marginLeft:8, color:'#475569' }}>· {sleepWindow.duration}</span>
+            </div>
+          )}
 
           <div style={{ marginBottom:16 }}>
             <div style={fLabel}><span style={dot}/>Sleep Quality</div>
