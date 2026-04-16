@@ -14,7 +14,7 @@ export default function CalendarOverview({ selectedDate, onSelectDate, onReset }
 
   const initDate = new Date(selectedDate + 'T12:00:00')
   const [view, setView] = useState({ year: initDate.getFullYear(), month: initDate.getMonth() })
-  const [entryDates, setEntryDates] = useState(new Set())
+  const [entryDates, setEntryDates] = useState({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -25,11 +25,13 @@ export default function CalendarOverview({ selectedDate, onSelectDate, onReset }
       const to   = `${view.year}-${pad(view.month + 1)}-${pad(lastDay)}`
       const { data } = await supabase
         .from('daily_entries')
-        .select('date')
+        .select('date, sleep_h, wake_h, day_rating, activity, feel_overall, energy_level, sleep_quality')
         .eq('user_id', session.user.id)
         .gte('date', from)
         .lte('date', to)
-      setEntryDates(new Set((data || []).map(d => d.date)))
+      const map = {}
+      for (const e of (data || [])) map[e.date] = e
+      setEntryDates(map)
       setLoading(false)
     }
     load()
@@ -104,7 +106,10 @@ export default function CalendarOverview({ selectedDate, onSelectDate, onReset }
           const dateStr  = `${view.year}-${pad(view.month + 1)}-${pad(day)}`
           const isToday    = dateStr === today
           const isSelected = dateStr === selectedDate
-          const hasEntry   = entryDates.has(dateStr)
+          const entry      = entryDates[dateStr]
+          const hasEntry   = !!entry
+          const isComplete = hasEntry && (entry.sleep_h || 0) > 0 && (entry.wake_h || 0) > 0 && entry.day_rating != null && entry.feel_overall != null
+          const isPartial  = hasEntry && !isComplete
           const isFuture   = dateStr > today
 
           return (
@@ -128,8 +133,10 @@ export default function CalendarOverview({ selectedDate, onSelectDate, onReset }
                   ? 'linear-gradient(135deg,#7c3aed,#9d5ff5)'
                   : isToday
                   ? 'rgba(124,58,237,0.12)'
-                  : hasEntry
-                  ? 'rgba(16,185,129,0.07)'
+                  : isComplete
+                  ? 'rgba(16,185,129,0.1)'
+                  : isPartial
+                  ? 'rgba(245,158,11,0.08)'
                   : 'transparent',
                 color: isSelected ? '#fff' : isFuture ? '#1e293b' : isToday ? '#9d5ff5' : '#94a3b8',
                 cursor: isFuture ? 'default' : 'pointer',
@@ -140,13 +147,13 @@ export default function CalendarOverview({ selectedDate, onSelectDate, onReset }
                 padding: 0,
               }}
               onMouseOver={e => { if (!isFuture && !isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-              onMouseOut={e  => { if (!isFuture && !isSelected) e.currentTarget.style.background = hasEntry ? 'rgba(16,185,129,0.07)' : 'transparent' }}
+              onMouseOut={e  => { if (!isFuture && !isSelected) e.currentTarget.style.background = isComplete ? 'rgba(16,185,129,0.1)' : isPartial ? 'rgba(245,158,11,0.08)' : 'transparent' }}
             >
               <span>{day}</span>
               {hasEntry && (
                 <div style={{
                   width: 4, height: 4, borderRadius: '50%',
-                  background: isSelected ? 'rgba(255,255,255,0.75)' : '#10b981',
+                  background: isSelected ? 'rgba(255,255,255,0.75)' : isComplete ? '#10b981' : '#f59e0b',
                   flexShrink: 0,
                 }} />
               )}
@@ -157,12 +164,18 @@ export default function CalendarOverview({ selectedDate, onSelectDate, onReset }
 
       {/* Legend + today shortcut + reset */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.68rem', color: '#475569' }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block' }}/>
-          entry logged
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.68rem', color: '#475569' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block' }}/>
+            complete
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }}/>
+            partial
+          </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {onReset && entryDates.has(selectedDate) && (
+          {onReset && !!entryDates[selectedDate] && (
             <button
               onClick={() => onReset()}
               style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: 0.8 }}>
