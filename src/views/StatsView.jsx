@@ -83,11 +83,16 @@ function SleepRow({ bedTime, wakeTime, sleepDur }) {
   )
 }
 
-function ChartCard({ title, children }) {
+function ChartCard({ title, children, avg }) {
   return (
     <div style={{ background: '#111120', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 20, marginBottom: 12, boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
       <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f1f5f9', marginBottom: 16 }}>{title}</div>
       {children}
+      {avg && (
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '0.75rem', color: '#64748b', textAlign: 'center' }}>
+          {avg}
+        </div>
+      )}
     </div>
   )
 }
@@ -235,12 +240,13 @@ export default function StatsView() {
   const ENERGY_VAL = { exhausted: 1, tired: 2, neutral: 3, good: 4, energized: 5 }
 
   const sleepModel = (() => {
-    const valid = allEntries.filter(e =>
-      ENERGY_VAL[e.energy_level] &&
-      (e.sleep_h || 0) * 60 + (e.sleep_m || 0) > 0 &&
-      (e.wake_h  || 0) * 60 + (e.wake_m  || 0) > 0
-    )
-    if (valid.length < 3) return null
+    const valid = allEntries.filter(e => {
+      const dur  = (e.sleep_h || 0) * 60 + (e.sleep_m || 0)
+      const wake = (e.wake_h  || 0) * 60 + (e.wake_m  || 0)
+      // Require realistic values: 3–12h sleep, wake between 4am–12pm
+      return ENERGY_VAL[e.energy_level] && dur >= 180 && dur <= 720 && wake >= 240 && wake <= 720
+    })
+    if (valid.length < 5) return null
 
     // Group by 30-min sleep duration buckets
     const durBuckets = {}
@@ -261,7 +267,7 @@ export default function StatsView() {
       bedBuckets[bedKey].push(energy)
     }
 
-    const bestBucket = (buckets, minCount = 2) => {
+    const bestBucket = (buckets, minCount = 3) => {
       let best = null, bestAvg = -1
       for (const [key, vals] of Object.entries(buckets)) {
         if (vals.length < minCount) continue
@@ -630,17 +636,17 @@ export default function StatsView() {
           </div>
 
           {/* ── Day Rating ── */}
-          <ChartCard title="Day Rating">
+          <ChartCard title="Day Rating" avg={avgDayRating ? `Avg ${avgDayRating} / 10` : null}>
             <div style={{ height: 180 }}><canvas ref={ratingsRef} /></div>
           </ChartCard>
 
           {/* ── Sleep Duration ── */}
-          <ChartCard title="Sleep Duration (hours)">
+          <ChartCard title="Sleep Duration (hours)" avg={avgSleep ? `Avg ${avgSleep}` : null}>
             <div style={{ height: 180 }}><canvas ref={sleepRef} /></div>
           </ChartCard>
 
           {/* ── Wake Up Time ── */}
-          <ChartCard title="Wake Up Time">
+          <ChartCard title="Wake Up Time" avg={avgWake ? `Avg ${avgWake}` : null}>
             <div style={{ height: 180 }}><canvas ref={wakeRef} /></div>
           </ChartCard>
 
@@ -660,7 +666,7 @@ export default function StatsView() {
           )}
 
           {/* ── Screen & Social ── */}
-          <ChartCard title="Screen & Social Media Time">
+          <ChartCard title="Screen & Social Media Time" avg={[avgScreen && `Screen avg ${avgScreen}`, avgSocial && `Social avg ${avgSocial}`].filter(Boolean).join(' · ') || null}>
             <div style={{ height: 180 }}><canvas ref={screenRef} /></div>
           </ChartCard>
 
