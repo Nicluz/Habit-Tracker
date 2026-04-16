@@ -309,7 +309,7 @@ export default function StatsView() {
   })
 
   const ratingsData = entries.map(e => e.day_rating ?? null)
-  const sleepData   = entries.map(e => e.sleep_h != null ? +((e.sleep_h || 0) + (e.sleep_m || 0) / 60).toFixed(2) : null)
+  const sleepData   = entries.map(e => (e.sleep_h || 0) * 60 + (e.sleep_m || 0) > 0 ? +((e.sleep_h || 0) + (e.sleep_m || 0) / 60).toFixed(2) : null)
   const wakeData    = entries.map(e => e.wake_h  != null ? +((e.wake_h  || 0) + (e.wake_m  || 0) / 60).toFixed(2) : null)
 
   /* Numeric averages for average-line datasets */
@@ -320,6 +320,15 @@ export default function StatsView() {
   const avgRatingH = numAvg(ratingsData)
   const avgSleepH  = numAvg(sleepData)
   const avgWakeH   = numAvg(wakeData)
+
+  /* Weekday / weekend sleep split */
+  const isWeekend = (dateStr) => { const d = new Date(dateStr + 'T12:00:00').getDay(); return d === 0 || d === 6 }
+  const sleepWeekdayData = sleepData.map((v, i) => (!isWeekend(entries[i].date) ? v : null))
+  const sleepWeekendData = sleepData.map((v, i) => ( isWeekend(entries[i].date) ? v : null))
+  const avgSleepWeekday  = numAvg(sleepWeekdayData)
+  const avgSleepWeekend  = numAvg(sleepWeekendData)
+
+  const fmtSleepH = h => h == null ? null : (() => { const hrs = Math.floor(h); const m = Math.round((h - hrs) * 60); return m ? `${hrs}h ${m}m` : `${hrs}h` })()
 
   /* ─── Chart refs ─────────────────────────────────── */
   const ratingsRef  = useRef(null)
@@ -363,7 +372,7 @@ export default function StatsView() {
     },
   }, chartDeps)
 
-  /* Sleep duration – bar + avg */
+  /* Sleep duration – bar + 3 avg lines */
   useChart(sleepRef, {
     type: 'bar',
     data: {
@@ -376,14 +385,16 @@ export default function StatsView() {
           borderColor: '#3b82f6',
           borderWidth: 1,
           borderRadius: 4,
-          order: 1,
+          order: 3,
         },
-        avgSleepH != null && avgDataset(sleepData, `Avg ${avgSleepH.toFixed(1)}h`, 'rgba(255,255,255,0.5)'),
+        avgSleepH != null && { ...avgDataset(sleepData, 'Avg (all)', 'rgba(255,255,255,0.55)'), order: 0 },
+        avgSleepWeekday != null && { ...avgDataset(sleepWeekdayData, 'Weekdays', '#f59e0b'), borderDash: [4,3], order: 1 },
+        avgSleepWeekend != null && { ...avgDataset(sleepWeekendData, 'Weekends', '#10b981'), borderDash: [4,3], order: 2 },
       ].filter(Boolean),
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: true, labels: { boxWidth: 10, padding: 10, color: '#94a3b8', font: { size: 11 }, filter: item => item.datasetIndex !== 0 } } },
       scales: {
         y: { min: 5, max: 10, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
         x: { grid: { display: false } },
@@ -641,7 +652,7 @@ export default function StatsView() {
           </ChartCard>
 
           {/* ── Sleep Duration ── */}
-          <ChartCard title="Sleep Duration (hours)" avg={avgSleep ? `Avg ${avgSleep}` : null}>
+          <ChartCard title="Sleep Duration (hours)" avg={[avgSleep && `All: ${avgSleep}`, fmtSleepH(avgSleepWeekday) && `Weekdays: ${fmtSleepH(avgSleepWeekday)}`, fmtSleepH(avgSleepWeekend) && `Weekends: ${fmtSleepH(avgSleepWeekend)}`].filter(Boolean).join(' · ') || null}>
             <div style={{ height: 180 }}><canvas ref={sleepRef} /></div>
           </ChartCard>
 
