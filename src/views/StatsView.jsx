@@ -415,7 +415,7 @@ export default function StatsView() {
     },
   }, chartDeps)
 
-  /* Wake up time – bar + all/weekday/weekend avg lines */
+  /* Wake up time – bar + all avg line only */
   useChart(wakeRef, {
     type: 'bar',
     data: {
@@ -428,16 +428,14 @@ export default function StatsView() {
           borderColor: '#10b981',
           borderWidth: 1,
           borderRadius: 4,
-          order: 3,
+          order: 1,
         },
-        avgWakeH        != null && { ...avgDataset(wakeData,        'Avg (all)', 'rgba(255,255,255,0.55)'), order: 0 },
-        avgWakeWeekdayH != null && { ...avgDataset(wakeWeekdayData, 'Weekdays',  '#f59e0b'), borderDash: [4,3], order: 1 },
-        avgWakeWeekendH != null && { ...avgDataset(wakeWeekendData, 'Weekends',  '#818cf8'), borderDash: [4,3], order: 2 },
+        avgWakeH != null && { ...avgDataset(wakeData, 'Avg (all)', 'rgba(255,255,255,0.55)'), order: 0 },
       ].filter(Boolean),
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: true, labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, color: '#94a3b8', font: { size: 11 }, filter: item => item.datasetIndex !== 0 } } },
+      plugins: { legend: { display: false } },
       scales: {
         y: {
           min: 5, max: 10,
@@ -540,7 +538,7 @@ export default function StatsView() {
     },
     options: {
       responsive: true,
-      plugins: { legend: { labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 12, color: '#94a3b8' } } },
+      plugins: { legend: { labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 12, color: '#94a3b8' } } },
       scales: {
         y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
         x: { grid: { display: false } },
@@ -765,7 +763,7 @@ function WellbeingChart({ entries, labels }) {
         responsive: true,
         plugins: {
           legend: {
-            labels: { boxWidth: 10, padding: 12, color: '#94a3b8', font: { size: 11 } },
+            labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 12, color: '#94a3b8', font: { size: 11 } },
           },
         },
         scales: {
