@@ -21,8 +21,8 @@ const PERIODS = [
   { label: 'Year',  days: 365 },
 ]
 
-/* Okabe-Ito colorblind-safe palette (no yellow — hard to read on dark bg) */
-const CB_COLORS = ['#56B4E9', '#E69F00', '#009E73', '#CC79A7', '#D55E00']
+/* Colorblind-safe palette optimised for dark backgrounds */
+const CB_COLORS = ['#56B4E9', '#E69F00', '#2DD4BF', '#F472B6', '#A78BFA']
 
 Chart.defaults.color = '#94a3b8'
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)'
