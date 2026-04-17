@@ -21,8 +21,8 @@ const PERIODS = [
   { label: 'Year',  days: 365 },
 ]
 
-/* Okabe-Ito colorblind-safe palette */
-const CB_COLORS = ['#56B4E9', '#E69F00', '#009E73', '#F0E442', '#D55E00', '#CC79A7']
+/* Okabe-Ito colorblind-safe palette (no yellow — hard to read on dark bg) */
+const CB_COLORS = ['#56B4E9', '#E69F00', '#009E73', '#CC79A7', '#D55E00']
 
 Chart.defaults.color = '#94a3b8'
 Chart.defaults.borderColor = 'rgba(255,255,255,0.06)'
@@ -67,8 +67,8 @@ function StatChip({ label, value, sub, color = '#f1f5f9', large = false }) {
 
 function SleepRow({ bedTime, wakeTime, sleepDur }) {
   const items = [
-    { label: 'Avg Bed Time',  value: bedTime,   color: '#818cf8' },
-    { label: 'Avg Wake Up',   value: wakeTime,  color: '#06b6d4' },
+    { label: 'Avg Bed Time',  value: bedTime,   color: '#9d5ff5' },
+    { label: 'Avg Wake Up',   value: wakeTime,  color: '#10b981' },
     { label: 'Avg Sleep',     value: sleepDur,  color: '#3b82f6' },
   ]
   return (
@@ -424,8 +424,8 @@ export default function StatsView() {
         {
           label: 'Social Media (h)',
           data: socialDataRaw,
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239,68,68,0.08)',
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,0.08)',
           borderWidth: 2, pointRadius: 3, tension: 0.35, fill: true, spanGaps: false,
         },
       ],
@@ -524,25 +524,25 @@ export default function StatsView() {
 
             {/* Screen + Social */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <StatChip label="Avg Screen Time"  value={avgScreen} color="#f97316" />
-              <StatChip label="Avg Social Media" value={avgSocial} color="#ec4899" />
+              <StatChip label="Avg Screen Time"  value={avgScreen} color="#f59e0b" />
+              <StatChip label="Avg Social Media" value={avgSocial} color="#f59e0b" />
             </div>
 
             {/* Morning streak + Reading */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <StatChip label="Morning Streak" value={morningStreak} color="#f59e0b" sub="consecutive days" />
-              <StatChip label="Reading Days"   value={readingDays}   color="#14b8a6" sub={`of ${n} days`}  />
+              <StatChip label="Reading Days"   value={readingDays}   color="#3b82f6" sub={`of ${n} days`}  />
             </div>
 
             {/* Training + Push-ups */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <StatChip label="Training Sessions" value={trainingSessions} color="#10b981" sub={`of ${n} days`} />
-              <StatChip label="Avg Push-ups"      value={avgPushups}       color="#ef4444" sub="on active days"  />
+              <StatChip label="Avg Push-ups"      value={avgPushups}       color="#94a3b8" sub="on active days"  />
             </div>
 
             {/* Alcohol — bottom */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <StatChip label="Alcohol-Free Days" value={alcoholFreeDays} color="#22c55e" sub={`of ${n} days`} />
+              <StatChip label="Alcohol-Free Days" value={alcoholFreeDays} color="#10b981" sub={`of ${n} days`} />
               <StatChip label="Pints Drunk"       value={totalDrinks}     color="#94a3b8" sub={alcoholDays > 0 ? `across ${alcoholDays} days` : 'none this period'} />
             </div>
           </div>
@@ -608,16 +608,21 @@ function WellbeingChart({ entries, labels }) {
       type: 'line',
       data: {
         labels,
-        datasets: KEYS.map((k, i) => ({
-          label: LBLS[i],
-          data: entries.map(e => e[k] ?? null),
-          borderColor: CB_COLORS[i],
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          pointRadius: 2.5,
-          tension: 0.35,
-          spanGaps: true,
-        })),
+        datasets: KEYS.map((k, i) => {
+          const isOverall = k === 'feel_overall'
+          return {
+            label: LBLS[i],
+            data: entries.map(e => e[k] ?? null),
+            borderColor: isOverall ? '#f1f5f9' : CB_COLORS[i],
+            backgroundColor: 'transparent',
+            borderWidth: isOverall ? 3 : 1.5,
+            pointRadius: isOverall ? 4 : 2,
+            pointBackgroundColor: isOverall ? '#f1f5f9' : CB_COLORS[i],
+            tension: 0.35,
+            spanGaps: true,
+            order: isOverall ? 0 : 1,
+          }
+        }),
       },
       options: {
         responsive: true,
