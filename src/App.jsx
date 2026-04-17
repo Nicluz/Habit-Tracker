@@ -4,8 +4,9 @@ import { loadSettings, saveSettings } from './lib/settings'
 import LoginView    from './views/LoginView'
 import InputView    from './views/InputView'
 import StatsView    from './views/StatsView'
-import TrainingView from './views/TrainingView'
-import SettingsView from './views/SettingsView'
+import TrainingView    from './views/TrainingView'
+import PrioritiesView  from './views/PrioritiesView'
+import SettingsView    from './views/SettingsView'
 import BottomNav    from './components/BottomNav'
 import Toast        from './components/Toast'
 
@@ -99,7 +100,7 @@ export default function App() {
   if (!session) return <LoginView />
 
   /* ── Authenticated app ── */
-  const views = { input: InputView, stats: StatsView, training: TrainingView, settings: SettingsView }
+  const views = { input: InputView, stats: StatsView, training: TrainingView, priorities: PrioritiesView, settings: SettingsView }
   const View = views[activeView] || InputView
 
   return (

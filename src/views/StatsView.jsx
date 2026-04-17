@@ -223,14 +223,14 @@ export default function StatsView() {
   })()
 
   const avgScreen = (() => {
-    const es = entries.filter(e => e.screen_h != null)
+    const es = entries.filter(e => (e.screen_h || 0) * 60 + (e.screen_m || 0) > 0)
     if (!es.length) return null
     const m = es.reduce((s, e) => s + (e.screen_h || 0) * 60 + (e.screen_m || 0), 0) / es.length
     return `${Math.floor(m / 60)}h ${Math.round(m % 60)}m`
   })()
 
   const avgSocial = (() => {
-    const es = entries.filter(e => e.social_h != null)
+    const es = entries.filter(e => (e.social_h || 0) * 60 + (e.social_m || 0) > 0)
     if (!es.length) return null
     const m = es.reduce((s, e) => s + (e.social_h || 0) * 60 + (e.social_m || 0), 0) / es.length
     return `${Math.floor(m / 60)}h ${Math.round(m % 60)}m`
@@ -278,22 +278,27 @@ export default function StatsView() {
     }
 
     const bestDur = bestBucket(durBuckets)
-    const bestBed = bestBucket(bedBuckets)
+    if (!bestDur) return null
 
-    const fmtDur = mins => {
-      const h = Math.floor(mins / 60), m = mins % 60
-      return m ? `${h}h ${m}m – ${h}h ${m + 30}m` : `${h}h – ${h}h 30m`
+    // Avg wake time across all valid nights
+    const avgWakeMins = valid.reduce((s, e) => s + (e.wake_h || 0) * 60 + (e.wake_m || 0), 0) / valid.length
+
+    // Derive optimal bed time = avg wake − optimal sleep duration (midpoint of bucket)
+    const optDurMidMins = bestDur.key + 15
+    const optBedMins = ((avgWakeMins - optDurMidMins) + 1440) % 1440
+
+    const fmtTime = m => {
+      const t = ((Math.round(m) % 1440) + 1440) % 1440
+      return `${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`
     }
-    const fmtBed = mins => {
-      const fmt = m => `${String(Math.floor(m / 60)).padStart(2,'0')}:${String(m % 60).padStart(2,'0')}`
-      return `${fmt(mins)} – ${fmt((mins + 30) % 1440)}`
-    }
+    const fmtDur = mins => { const h = Math.floor(mins / 60), m = mins % 60; return m ? `${h}h ${m}m` : `${h}h` }
     const energyLabel = avg => avg >= 4.5 ? 'Energized' : avg >= 3.5 ? 'Good' : avg >= 2.5 ? 'Neutral' : 'Tired'
 
     return {
       n: valid.length,
-      dur: bestDur ? { range: fmtDur(bestDur.key), avg: bestDur.avg, count: bestDur.count, label: energyLabel(bestDur.avg) } : null,
-      bed: bestBed ? { range: fmtBed(bestBed.key), avg: bestBed.avg, count: bestBed.count, label: energyLabel(bestBed.avg) } : null,
+      avgWake: fmtTime(avgWakeMins),
+      dur: { range: `${fmtDur(bestDur.key)} – ${fmtDur(bestDur.key + 30)}`, count: bestDur.count, label: energyLabel(bestDur.avg) },
+      bed: fmtTime(optBedMins),
     }
   })()
 
@@ -310,7 +315,9 @@ export default function StatsView() {
 
   const ratingsData = entries.map(e => e.day_rating ?? null)
   const sleepData   = entries.map(e => (e.sleep_h || 0) * 60 + (e.sleep_m || 0) > 0 ? +((e.sleep_h || 0) + (e.sleep_m || 0) / 60).toFixed(2) : null)
-  const wakeData    = entries.map(e => e.wake_h  != null ? +((e.wake_h  || 0) + (e.wake_m  || 0) / 60).toFixed(2) : null)
+  const wakeData    = entries.map(e => (e.wake_h  || 0) * 60 + (e.wake_m  || 0) > 0 ? +((e.wake_h  || 0) + (e.wake_m  || 0) / 60).toFixed(2) : null)
+  const screenDataRaw = entries.map(e => (e.screen_h || 0) * 60 + (e.screen_m || 0) > 0 ? +((e.screen_h || 0) + (e.screen_m || 0) / 60).toFixed(2) : null)
+  const socialDataRaw = entries.map(e => (e.social_h || 0) * 60 + (e.social_m || 0) > 0 ? +((e.social_h || 0) + (e.social_m || 0) / 60).toFixed(2) : null)
 
   /* Numeric averages for average-line datasets */
   const numAvg = (arr) => {
@@ -321,14 +328,22 @@ export default function StatsView() {
   const avgSleepH  = numAvg(sleepData)
   const avgWakeH   = numAvg(wakeData)
 
-  /* Weekday / weekend sleep split */
+  /* Weekday / weekend split helpers */
   const isWeekend = (dateStr) => { const d = new Date(dateStr + 'T12:00:00').getDay(); return d === 0 || d === 6 }
+
+  /* Sleep weekday/weekend */
   const sleepWeekdayData = sleepData.map((v, i) => (!isWeekend(entries[i].date) ? v : null))
   const sleepWeekendData = sleepData.map((v, i) => ( isWeekend(entries[i].date) ? v : null))
   const avgSleepWeekday  = numAvg(sleepWeekdayData)
   const avgSleepWeekend  = numAvg(sleepWeekendData)
-
   const fmtSleepH = h => h == null ? null : (() => { const hrs = Math.floor(h); const m = Math.round((h - hrs) * 60); return m ? `${hrs}h ${m}m` : `${hrs}h` })()
+
+  /* Wake weekday/weekend */
+  const wakeWeekdayData  = wakeData.map((v, i) => (!isWeekend(entries[i].date) ? v : null))
+  const wakeWeekendData  = wakeData.map((v, i) => ( isWeekend(entries[i].date) ? v : null))
+  const avgWakeWeekdayH  = numAvg(wakeWeekdayData)
+  const avgWakeWeekendH  = numAvg(wakeWeekendData)
+  const fmtWakeH = h => h == null ? null : `${String(Math.floor(h)).padStart(2,'0')}:${String(Math.round((h % 1) * 60)).padStart(2,'0')}`
 
   /* ─── Chart refs ─────────────────────────────────── */
   const ratingsRef  = useRef(null)
@@ -372,7 +387,7 @@ export default function StatsView() {
     },
   }, chartDeps)
 
-  /* Sleep duration – bar + 3 avg lines */
+  /* Sleep duration – bar + all avg line only */
   useChart(sleepRef, {
     type: 'bar',
     data: {
@@ -385,16 +400,14 @@ export default function StatsView() {
           borderColor: '#3b82f6',
           borderWidth: 1,
           borderRadius: 4,
-          order: 3,
+          order: 1,
         },
         avgSleepH != null && { ...avgDataset(sleepData, 'Avg (all)', 'rgba(255,255,255,0.55)'), order: 0 },
-        avgSleepWeekday != null && { ...avgDataset(sleepWeekdayData, 'Weekdays', '#f59e0b'), borderDash: [4,3], order: 1 },
-        avgSleepWeekend != null && { ...avgDataset(sleepWeekendData, 'Weekends', '#10b981'), borderDash: [4,3], order: 2 },
       ].filter(Boolean),
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: true, labels: { boxWidth: 10, padding: 10, color: '#94a3b8', font: { size: 11 }, filter: item => item.datasetIndex !== 0 } } },
+      plugins: { legend: { display: false } },
       scales: {
         y: { min: 5, max: 10, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
         x: { grid: { display: false } },
@@ -402,7 +415,7 @@ export default function StatsView() {
     },
   }, chartDeps)
 
-  /* Wake up time – bar + avg */
+  /* Wake up time – bar + all/weekday/weekend avg lines */
   useChart(wakeRef, {
     type: 'bar',
     data: {
@@ -415,25 +428,20 @@ export default function StatsView() {
           borderColor: '#10b981',
           borderWidth: 1,
           borderRadius: 4,
-          order: 1,
+          order: 3,
         },
-        avgWakeH != null && avgDataset(
-          wakeData,
-          `Avg ${Math.floor(avgWakeH)}:${String(Math.round((avgWakeH % 1) * 60)).padStart(2, '0')}`,
-          'rgba(255,255,255,0.5)',
-        ),
+        avgWakeH        != null && { ...avgDataset(wakeData,        'Avg (all)', 'rgba(255,255,255,0.55)'), order: 0 },
+        avgWakeWeekdayH != null && { ...avgDataset(wakeWeekdayData, 'Weekdays',  '#f59e0b'), borderDash: [4,3], order: 1 },
+        avgWakeWeekendH != null && { ...avgDataset(wakeWeekendData, 'Weekends',  '#818cf8'), borderDash: [4,3], order: 2 },
       ].filter(Boolean),
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: true, labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, color: '#94a3b8', font: { size: 11 }, filter: item => item.datasetIndex !== 0 } } },
       scales: {
         y: {
           min: 5, max: 10,
-          ticks: {
-            stepSize: 1,
-            callback: v => `${Math.floor(v)}:00`,
-          },
+          ticks: { stepSize: 1, callback: v => `${Math.floor(v)}:00` },
           grid: { color: 'rgba(255,255,255,0.05)' },
         },
         x: { grid: { display: false } },
@@ -508,7 +516,7 @@ export default function StatsView() {
     },
   }, chartDeps)
 
-  /* Screen vs social */
+  /* Screen vs social — null for 0,0 entries, no spanGaps */
   useChart(screenRef, {
     type: 'line',
     data: {
@@ -516,23 +524,23 @@ export default function StatsView() {
       datasets: [
         {
           label: 'Screen Time (h)',
-          data: entries.map(e => e.screen_h != null ? +((e.screen_h || 0) + (e.screen_m || 0) / 60).toFixed(2) : null),
+          data: screenDataRaw,
           borderColor: '#f59e0b',
           backgroundColor: 'rgba(245,158,11,0.1)',
-          borderWidth: 2, pointRadius: 3, tension: 0.35, fill: true, spanGaps: true,
+          borderWidth: 2, pointRadius: 3, tension: 0.35, fill: true, spanGaps: false,
         },
         {
           label: 'Social Media (h)',
-          data: entries.map(e => e.social_h != null ? +((e.social_h || 0) + (e.social_m || 0) / 60).toFixed(2) : null),
+          data: socialDataRaw,
           borderColor: '#ef4444',
           backgroundColor: 'rgba(239,68,68,0.08)',
-          borderWidth: 2, pointRadius: 3, tension: 0.35, fill: true, spanGaps: true,
+          borderWidth: 2, pointRadius: 3, tension: 0.35, fill: true, spanGaps: false,
         },
       ],
     },
     options: {
       responsive: true,
-      plugins: { legend: { labels: { boxWidth: 10, padding: 12, color: '#94a3b8' } } },
+      plugins: { legend: { labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 12, color: '#94a3b8' } } },
       scales: {
         y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
         x: { grid: { display: false } },
@@ -657,7 +665,7 @@ export default function StatsView() {
           </ChartCard>
 
           {/* ── Wake Up Time ── */}
-          <ChartCard title="Wake Up Time" avg={avgWake ? `Avg ${avgWake}` : null}>
+          <ChartCard title="Wake Up Time" avg={[avgWake && `All: ${avgWake}`, fmtWakeH(avgWakeWeekdayH) && `Weekdays: ${fmtWakeH(avgWakeWeekdayH)}`, fmtWakeH(avgWakeWeekendH) && `Weekends: ${fmtWakeH(avgWakeWeekendH)}`].filter(Boolean).join(' · ') || null}>
             <div style={{ height: 180 }}><canvas ref={wakeRef} /></div>
           </ChartCard>
 
@@ -685,31 +693,26 @@ export default function StatsView() {
           {sleepModel ? (
             <ChartCard title={`Optimal Sleep Model · based on ${sleepModel.n} nights`}>
               <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: 14 }}>
-                Calculated from all your logged nights with an energy level. Shows which sleep duration and bed time correlate with the highest energy the next day.
+                Based on {sleepModel.n} nights. Your avg wake time is <strong style={{color:'#94a3b8'}}>{sleepModel.avgWake}</strong>. The sleep duration below gave you the highest energy — bed time is derived from it.
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {sleepModel.dur && (
-                  <div style={{ background: '#191928', borderRadius: 12, padding: 14, border: '1px solid rgba(59,130,246,0.2)' }}>
-                    <div style={{ fontSize: '0.63rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 8 }}>Optimal Duration</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#3b82f6', marginBottom: 4 }}>{sleepModel.dur.range}</div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>avg energy: <span style={{ color: '#10b981', fontWeight: 600 }}>{sleepModel.dur.label}</span></div>
-                    <div style={{ fontSize: '0.68rem', color: '#475569', marginTop: 2 }}>{sleepModel.dur.count} nights sampled</div>
-                  </div>
-                )}
-                {sleepModel.bed && (
-                  <div style={{ background: '#191928', borderRadius: 12, padding: 14, border: '1px solid rgba(129,140,248,0.2)' }}>
-                    <div style={{ fontSize: '0.63rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 8 }}>Optimal Bed Time</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#818cf8', marginBottom: 4 }}>{sleepModel.bed.range}</div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>avg energy: <span style={{ color: '#10b981', fontWeight: 600 }}>{sleepModel.bed.label}</span></div>
-                    <div style={{ fontSize: '0.68rem', color: '#475569', marginTop: 2 }}>{sleepModel.bed.count} nights sampled</div>
-                  </div>
-                )}
+                <div style={{ background: '#191928', borderRadius: 12, padding: 14, border: '1px solid rgba(59,130,246,0.2)' }}>
+                  <div style={{ fontSize: '0.63rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 8 }}>Optimal Duration</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#3b82f6', marginBottom: 4 }}>{sleepModel.dur.range}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>feels: <span style={{ color: '#10b981', fontWeight: 600 }}>{sleepModel.dur.label}</span></div>
+                  <div style={{ fontSize: '0.68rem', color: '#475569', marginTop: 2 }}>{sleepModel.dur.count} nights sampled</div>
+                </div>
+                <div style={{ background: '#191928', borderRadius: 12, padding: 14, border: '1px solid rgba(129,140,248,0.2)' }}>
+                  <div style={{ fontSize: '0.63rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 8 }}>Optimal Bed Time</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#818cf8', marginBottom: 4 }}>{sleepModel.bed}</div>
+                  <div style={{ fontSize: '0.68rem', color: '#475569' }}>wake {sleepModel.avgWake} − {sleepModel.dur.range.split('–')[0].trim()}</div>
+                </div>
               </div>
             </ChartCard>
           ) : (
             <ChartCard title="Optimal Sleep Model">
               <p style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                Log at least 3 nights with an energy level to unlock your personal sleep model.
+                Log at least 5 nights with an energy level to unlock your personal sleep model.
               </p>
             </ChartCard>
           )}
