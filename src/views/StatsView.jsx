@@ -57,7 +57,7 @@ function useChart(ref, config, deps) {
 
 function StatChip({ label, value, sub, color = '#f1f5f9', large = false }) {
   return (
-    <div style={{ background: '#111120', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: large ? '20px 24px' : 16, boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
+    <div style={{ background: '#111120', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: large ? '20px 24px' : 16, boxShadow: '0 4px 24px rgba(0,0,0,0.4)', textAlign: large ? 'center' : 'left' }}>
       <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: large ? '2.6rem' : '1.6rem', fontWeight: 800, letterSpacing: '-0.03em', color }}>{value ?? '—'}</div>
       {sub && <div style={{ fontSize: '0.73rem', color: '#64748b', marginTop: 2 }}>{sub}</div>}
@@ -105,7 +105,6 @@ export default function StatsView() {
   const [customTo,   setCustomTo]   = useState('')
   const [entries,    setEntries]    = useState([])
   const [loading,    setLoading]    = useState(true)
-  const [allEntries, setAllEntries] = useState([])
 
   useEffect(() => {
     async function load() {
@@ -133,19 +132,6 @@ export default function StatsView() {
     }
     load()
   }, [mode, periodIdx, customFrom, customTo, session.user.id])
-
-  /* ─── Load ALL entries for sleep model (no date filter) ── */
-  useEffect(() => {
-    async function loadAll() {
-      const { data } = await supabase
-        .from('daily_entries')
-        .select('sleep_h, sleep_m, wake_h, wake_m, energy_level, day_rating')
-        .eq('user_id', session.user.id)
-        .not('energy_level', 'is', null)
-      setAllEntries(data || [])
-    }
-    loadAll()
-  }, [session.user.id])
 
   /* ─── Computed stats ─────────────────────────────── */
   const n = entries.length
@@ -236,72 +222,6 @@ export default function StatsView() {
     return `${Math.floor(m / 60)}h ${Math.round(m % 60)}m`
   })()
 
-  /* ─── Optimal sleep model (all data) ────────────── */
-  const ENERGY_VAL = { exhausted: 1, tired: 2, neutral: 3, good: 4, energized: 5 }
-
-  const sleepModel = (() => {
-    const valid = allEntries.filter(e => {
-      const dur  = (e.sleep_h || 0) * 60 + (e.sleep_m || 0)
-      const wake = (e.wake_h  || 0) * 60 + (e.wake_m  || 0)
-      // Require realistic values: 3–12h sleep, wake between 4am–12pm
-      return ENERGY_VAL[e.energy_level] && dur >= 180 && dur <= 720 && wake >= 240 && wake <= 720
-    })
-    if (valid.length < 5) return null
-
-    // Group by 30-min sleep duration buckets
-    const durBuckets = {}
-    const bedBuckets = {}
-    for (const e of valid) {
-      const durMins = (e.sleep_h || 0) * 60 + (e.sleep_m || 0)
-      const wakeMins = (e.wake_h || 0) * 60 + (e.wake_m || 0)
-      const rawBed = wakeMins - durMins
-      const bedMins = ((rawBed % 1440) + 1440) % 1440
-      const energy = ENERGY_VAL[e.energy_level]
-
-      const durKey = Math.floor(durMins / 30) * 30
-      if (!durBuckets[durKey]) durBuckets[durKey] = []
-      durBuckets[durKey].push(energy)
-
-      const bedKey = Math.floor(bedMins / 30) * 30
-      if (!bedBuckets[bedKey]) bedBuckets[bedKey] = []
-      bedBuckets[bedKey].push(energy)
-    }
-
-    const bestBucket = (buckets, minCount = 3) => {
-      let best = null, bestAvg = -1
-      for (const [key, vals] of Object.entries(buckets)) {
-        if (vals.length < minCount) continue
-        const avg = vals.reduce((s, v) => s + v, 0) / vals.length
-        if (avg > bestAvg) { bestAvg = avg; best = { key: Number(key), avg, count: vals.length } }
-      }
-      return best
-    }
-
-    const bestDur = bestBucket(durBuckets)
-    if (!bestDur) return null
-
-    // Avg wake time across all valid nights
-    const avgWakeMins = valid.reduce((s, e) => s + (e.wake_h || 0) * 60 + (e.wake_m || 0), 0) / valid.length
-
-    // Derive optimal bed time = avg wake − optimal sleep duration (midpoint of bucket)
-    const optDurMidMins = bestDur.key + 15
-    const optBedMins = ((avgWakeMins - optDurMidMins) + 1440) % 1440
-
-    const fmtTime = m => {
-      const t = ((Math.round(m) % 1440) + 1440) % 1440
-      return `${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`
-    }
-    const fmtDur = mins => { const h = Math.floor(mins / 60), m = mins % 60; return m ? `${h}h ${m}m` : `${h}h` }
-    const energyLabel = avg => avg >= 4.5 ? 'Energized' : avg >= 3.5 ? 'Good' : avg >= 2.5 ? 'Neutral' : 'Tired'
-
-    return {
-      n: valid.length,
-      avgWake: fmtTime(avgWakeMins),
-      dur: { range: `${fmtDur(bestDur.key)} – ${fmtDur(bestDur.key + 30)}`, count: bestDur.count, label: energyLabel(bestDur.avg) },
-      bed: fmtTime(optBedMins),
-    }
-  })()
-
   const alcoholDays     = entries.filter(e => e.alcohol).length
   const alcoholFreeDays = entries.filter(e => !e.alcohol).length
   const totalDrinks     = entries.filter(e => e.alcohol).reduce((s, e) => s + (Number(e.num_drinks) || 0), 0)
@@ -350,7 +270,6 @@ export default function StatsView() {
   const sleepRef    = useRef(null)
   const wakeRef     = useRef(null)
   const feelingsRef = useRef(null)
-  const activRef    = useRef(null)
   const screenRef   = useRef(null)
 
   const chartDeps = [entries]
@@ -398,8 +317,8 @@ export default function StatsView() {
         {
           label: 'Sleep (hrs)',
           data: sleepData,
-          backgroundColor: entries.map(e => goodEnergy(e) ? 'rgba(16,185,129,0.7)' : 'rgba(59,130,246,0.6)'),
-          borderColor:     entries.map(e => goodEnergy(e) ? '#10b981' : '#3b82f6'),
+          backgroundColor: entries.map(e => goodEnergy(e) ? 'rgba(245,158,11,0.7)' : 'rgba(59,130,246,0.6)'),
+          borderColor:     entries.map(e => goodEnergy(e) ? '#f59e0b' : '#3b82f6'),
           borderWidth: 1,
           borderRadius: 4,
           order: 1,
@@ -485,37 +404,6 @@ export default function StatsView() {
           angleLines: { color: 'rgba(255,255,255,0.07)' },
           pointLabels: { color: '#94a3b8', font: { size: 11 } },
         },
-      },
-    },
-  }, chartDeps)
-
-  /* Activity breakdown */
-  const activityCounts = entries.reduce((acc, e) => {
-    if (e.activity) acc[e.activity] = (acc[e.activity] || 0) + 1
-    return acc
-  }, {})
-  const actLabels = Object.keys(activityCounts)
-  const actColors = ['#9d5ff5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#f97316']
-
-  useChart(activRef, {
-    type: 'bar',
-    data: {
-      labels: actLabels,
-      datasets: [{
-        data: actLabels.map(k => activityCounts[k]),
-        backgroundColor: actLabels.map((_, i) => actColors[i % actColors.length] + '99'),
-        borderColor:     actLabels.map((_, i) => actColors[i % actColors.length]),
-        borderWidth: 1,
-        borderRadius: 4,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        x: { grid: { display: false } },
       },
     },
   }, chartDeps)
@@ -682,45 +570,10 @@ export default function StatsView() {
           {/* ── Well-being Over Time ── */}
           <WellbeingChart entries={entries} labels={labels} />
 
-          {/* ── Activities ── */}
-          {actLabels.length > 0 && (
-            <ChartCard title="Activities Breakdown">
-              <div style={{ height: 180 }}><canvas ref={activRef} /></div>
-            </ChartCard>
-          )}
-
           {/* ── Screen & Social ── */}
           <ChartCard title="Screen & Social Media Time" avg={[avgScreen && `Screen avg ${avgScreen}`, avgSocial && `Social avg ${avgSocial}`].filter(Boolean).join(' · ') || null}>
             <div style={{ height: 180 }}><canvas ref={screenRef} /></div>
           </ChartCard>
-
-          {/* ── Optimal Sleep Model ── */}
-          {sleepModel ? (
-            <ChartCard title={`Optimal Sleep Model · based on ${sleepModel.n} nights`}>
-              <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: 14 }}>
-                Based on {sleepModel.n} nights. Your avg wake time is <strong style={{color:'#94a3b8'}}>{sleepModel.avgWake}</strong>. The sleep duration below gave you the highest energy — bed time is derived from it.
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div style={{ background: '#191928', borderRadius: 12, padding: 14, border: '1px solid rgba(59,130,246,0.2)' }}>
-                  <div style={{ fontSize: '0.63rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 8 }}>Optimal Duration</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#3b82f6', marginBottom: 4 }}>{sleepModel.dur.range}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b' }}>feels: <span style={{ color: '#10b981', fontWeight: 600 }}>{sleepModel.dur.label}</span></div>
-                  <div style={{ fontSize: '0.68rem', color: '#475569', marginTop: 2 }}>{sleepModel.dur.count} nights sampled</div>
-                </div>
-                <div style={{ background: '#191928', borderRadius: 12, padding: 14, border: '1px solid rgba(129,140,248,0.2)' }}>
-                  <div style={{ fontSize: '0.63rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 8 }}>Optimal Bed Time</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#818cf8', marginBottom: 4 }}>{sleepModel.bed}</div>
-                  <div style={{ fontSize: '0.68rem', color: '#475569' }}>wake {sleepModel.avgWake} − {sleepModel.dur.range.split('–')[0].trim()}</div>
-                </div>
-              </div>
-            </ChartCard>
-          ) : (
-            <ChartCard title="Optimal Sleep Model">
-              <p style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                Log at least 5 nights with an energy level to unlock your personal sleep model.
-              </p>
-            </ChartCard>
-          )}
 
           {/* ── Sleep Quality Distribution ── */}
           <ChartCard title="Sleep Quality Distribution">
