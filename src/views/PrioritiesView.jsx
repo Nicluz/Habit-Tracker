@@ -11,6 +11,7 @@ const LEVELS = [
 ]
 
 const EXTRA_SECTIONS = [
+  { key: 'shopping',       label: 'Shopping List',              color: '#f97316', bg: 'rgba(249,115,22,0.12)',  border: 'rgba(249,115,22,0.25)'  },
   { key: 'spare_time',     label: 'Spare Time Activities',     color: '#10b981', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.25)'  },
   { key: 'friends',        label: 'Meet Friends',               color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.25)'  },
   { key: 'sursee_luzern',  label: 'Transfer Sursee → Lucerne', color: '#06b6d4', bg: 'rgba(6,182,212,0.12)',  border: 'rgba(6,182,212,0.25)'   },
