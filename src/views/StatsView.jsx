@@ -424,8 +424,8 @@ export default function StatsView() {
         {
           label: 'Social Media (h)',
           data: socialDataRaw,
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59,130,246,0.08)',
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249,115,22,0.08)',
           borderWidth: 2, pointRadius: 3, tension: 0.35, fill: true, spanGaps: false,
         },
       ],
@@ -522,28 +522,28 @@ export default function StatsView() {
             {/* Sleep row — 3 stats in one card */}
             <SleepRow bedTime={avgBedTime} wakeTime={avgWake} sleepDur={avgSleep} />
 
-            {/* Screen + Social */}
+            {/* Screen + Social — yellow */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <StatChip label="Avg Screen Time"  value={avgScreen} color="#f59e0b" />
               <StatChip label="Avg Social Media" value={avgSocial} color="#f59e0b" />
             </div>
 
-            {/* Morning streak + Reading */}
+            {/* Morning streak + Reading — blue */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <StatChip label="Morning Streak" value={morningStreak} color="#f59e0b" sub="consecutive days" />
+              <StatChip label="Morning Streak" value={morningStreak} color="#3b82f6" sub="consecutive days" />
               <StatChip label="Reading Days"   value={readingDays}   color="#3b82f6" sub={`of ${n} days`}  />
             </div>
 
-            {/* Training + Push-ups */}
+            {/* Training + Push-ups — green */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <StatChip label="Training Sessions" value={trainingSessions} color="#10b981" sub={`of ${n} days`} />
-              <StatChip label="Avg Push-ups"      value={avgPushups}       color="#94a3b8" sub="on active days"  />
+              <StatChip label="Avg Push-ups"      value={avgPushups}       color="#10b981" sub="on active days"  />
             </div>
 
-            {/* Alcohol — bottom */}
+            {/* Alcohol — turquoise */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <StatChip label="Alcohol-Free Days" value={alcoholFreeDays} color="#10b981" sub={`of ${n} days`} />
-              <StatChip label="Pints Drunk"       value={totalDrinks}     color="#94a3b8" sub={alcoholDays > 0 ? `across ${alcoholDays} days` : 'none this period'} />
+              <StatChip label="Alcohol-Free Days" value={alcoholFreeDays} color="#06b6d4" sub={`of ${n} days`} />
+              <StatChip label="Pints Drunk"       value={totalDrinks}     color="#06b6d4" sub={alcoholDays > 0 ? `across ${alcoholDays} days` : 'none this period'} />
             </div>
           </div>
 
@@ -610,14 +610,15 @@ function WellbeingChart({ entries, labels }) {
         labels,
         datasets: KEYS.map((k, i) => {
           const isOverall = k === 'feel_overall'
+          const color = isOverall ? '#ef4444' : CB_COLORS[i]
           return {
             label: LBLS[i],
             data: entries.map(e => e[k] ?? null),
-            borderColor: isOverall ? '#f1f5f9' : CB_COLORS[i],
+            borderColor: color,
             backgroundColor: 'transparent',
-            borderWidth: isOverall ? 3 : 1.5,
-            pointRadius: isOverall ? 4 : 2,
-            pointBackgroundColor: isOverall ? '#f1f5f9' : CB_COLORS[i],
+            borderWidth: 2,
+            pointRadius: 2.5,
+            pointBackgroundColor: color,
             tension: 0.35,
             spanGaps: true,
             order: isOverall ? 0 : 1,
