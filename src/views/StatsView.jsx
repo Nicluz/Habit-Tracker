@@ -379,6 +379,7 @@ export default function StatsView() {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         y: { min: 1, max: 10, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
@@ -387,7 +388,8 @@ export default function StatsView() {
     },
   }, chartDeps)
 
-  /* Sleep duration – bar + all avg line only */
+  /* Sleep duration – bar + all avg line only; green bar when energy good/energized */
+  const goodEnergy = e => e.energy_level === 'good' || e.energy_level === 'energized'
   useChart(sleepRef, {
     type: 'bar',
     data: {
@@ -396,8 +398,8 @@ export default function StatsView() {
         {
           label: 'Sleep (hrs)',
           data: sleepData,
-          backgroundColor: 'rgba(59,130,246,0.6)',
-          borderColor: '#3b82f6',
+          backgroundColor: entries.map(e => goodEnergy(e) ? 'rgba(16,185,129,0.7)' : 'rgba(59,130,246,0.6)'),
+          borderColor:     entries.map(e => goodEnergy(e) ? '#10b981' : '#3b82f6'),
           borderWidth: 1,
           borderRadius: 4,
           order: 1,
@@ -407,6 +409,7 @@ export default function StatsView() {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         y: { min: 5, max: 10, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
@@ -415,7 +418,7 @@ export default function StatsView() {
     },
   }, chartDeps)
 
-  /* Wake up time – bar + all avg line only */
+  /* Wake up time – bar + all avg line only; amber bar when energy good/energized */
   useChart(wakeRef, {
     type: 'bar',
     data: {
@@ -424,8 +427,8 @@ export default function StatsView() {
         {
           label: 'Wake Up',
           data: wakeData,
-          backgroundColor: 'rgba(16,185,129,0.55)',
-          borderColor: '#10b981',
+          backgroundColor: entries.map(e => goodEnergy(e) ? 'rgba(245,158,11,0.7)' : 'rgba(16,185,129,0.55)'),
+          borderColor:     entries.map(e => goodEnergy(e) ? '#f59e0b' : '#10b981'),
           borderWidth: 1,
           borderRadius: 4,
           order: 1,
@@ -435,6 +438,7 @@ export default function StatsView() {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         y: {
@@ -471,6 +475,7 @@ export default function StatsView() {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         r: {
@@ -506,6 +511,7 @@ export default function StatsView() {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
@@ -539,6 +545,7 @@ export default function StatsView() {
     options: {
       responsive: true,
       plugins: { legend: { labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 12, color: '#94a3b8' } } },
+      maintainAspectRatio: false,
       scales: {
         y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
         x: { grid: { display: false } },
@@ -641,7 +648,7 @@ export default function StatsView() {
 
             {/* Training + Push-ups */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <StatChip label="Training Sessions" value={trainingSessions} color="#10b981" sub="excl. rest days" />
+              <StatChip label="Training Sessions" value={trainingSessions} color="#10b981" sub={`of ${n} days`} />
               <StatChip label="Avg Push-ups"      value={avgPushups}       color="#ef4444" sub="on active days"  />
             </div>
 
@@ -761,6 +768,7 @@ function WellbeingChart({ entries, labels }) {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: {
             labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 12, color: '#94a3b8', font: { size: 11 } },
