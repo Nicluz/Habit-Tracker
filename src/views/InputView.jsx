@@ -59,7 +59,6 @@ const EMPTY = {
 /* ── Shared styles ────────────────────────────────── */
 const card      = { background:'#111120', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:20, marginBottom:12 }
 const cardTitle = { fontSize:'0.68rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#94a3b8', marginBottom:16, display:'flex', alignItems:'center', gap:8 }
-const iconBox   = (bg) => ({ width:28, height:28, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, background:bg, flexShrink:0 })
 const fLabel    = { fontSize:'0.8125rem', fontWeight:600, color:'#cbd5e1', marginBottom:8, display:'flex', alignItems:'center', gap:6 }
 const dot       = { width:6, height:6, borderRadius:'50%', background:'#7c3aed', flexShrink:0 }
 
@@ -240,7 +239,7 @@ export default function InputView() {
 
         {/* ══ SLEEP ══ */}
         <div style={card}>
-          <div style={cardTitle}><span style={iconBox('rgba(59,130,246,0.15)')}>😴</span>Sleep</div>
+          <div style={cardTitle}>Sleep</div>
 
           {/* Duration + Wake — stack on mobile, side-by-side on sm+ */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ marginBottom: sleepWindow ? 8 : 16 }}>
@@ -295,7 +294,7 @@ export default function InputView() {
 
         {/* ══ TRAINING ══ */}
         <div style={card}>
-          <div style={cardTitle}><span style={iconBox('rgba(239,68,68,0.15)')}>🏋️</span>Training</div>
+          <div style={cardTitle}>Training</div>
 
           <div style={{ marginBottom:16 }}>
             <div style={fLabel}><span style={dot}/>Activity</div>
@@ -356,7 +355,7 @@ export default function InputView() {
 
         {/* ══ GENERAL ══ */}
         <div style={card}>
-          <div style={cardTitle}><span style={iconBox('rgba(245,158,11,0.15)')}>📊</span>General</div>
+          <div style={cardTitle}>General</div>
 
           <div style={{ marginBottom:16 }}>
             <RatingGrid label="Day Rating" value={form.day_rating} onChange={v => set('day_rating', v)} />
@@ -403,7 +402,7 @@ export default function InputView() {
 
         {/* ══ HOW I FEEL ══ */}
         <div style={card}>
-          <div style={cardTitle}><span style={iconBox('rgba(16,185,129,0.15)')}>💭</span>How I Feel</div>
+          <div style={cardTitle}>How I Feel</div>
 
           {/* 5 user-rated feelings — 1 col on mobile, 2 col on wider */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom:20 }}>
